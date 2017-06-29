@@ -117,8 +117,15 @@ def __initDataForItemAndSetCommon(type_item_category, type_item_tag):
     '''
     展现内容，与当时出现的天气有关
     '''
-    curCategory = __getSpecCategroyItem(name='weather', description='天气', type=type_item_category)
-    __getSpecTagItem(name='heavyRain', description='暴雨', category=curCategory, type=type_item_tag)
+    curCategory = __getSpecCategroyItem(name='weather', description='气象', type=type_item_category)
+    __getSpecTagItem(name='heavy-rain', description='暴雨', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='typhoon', description='台风', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='tornado', description='龙卷风', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='hail', description='冰雹', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='snowstorm', description='暴风雪', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='high-temperature', description='高温', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='cold', description='寒冷', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='extremely-cold', description='极寒', category=curCategory, type=type_item_tag)
 
     '''
     展现内容，当时出现的场景主要状态

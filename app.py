@@ -2,8 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask
-from core.database import db
 
+# local
+from core.database import db
+from core.g_orm_def import *
+from core.gif.orm_def import *
+from core.gif.data_init import init_all as gif_data_init
+
+
+## ---------------------
 app = Flask(__name__)
 
 print('call Flask ...')
@@ -15,18 +22,10 @@ app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN']=True #设置这一项是每次请求
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=True
 
 
-db.init_app(app)
-
-with app.test_request_context():
-    from core.gif.orm_def import *
-    from core.gif.data_init import init_all as gif_data_init
-    print('call db.create_all ...')
+@app.before_first_request
+def create_tables():
     db.create_all()
     gif_data_init()
-
-
-# from core.gif.data_init import init_all
-# init_all()
 
 @app.route('/')
 def index():
@@ -43,3 +42,8 @@ def services_gif_index():
 @app.route('/da/gif/start/')
 def da_gif_start():
     return "It's gif data acquisition engine"
+
+
+if __name__ == '__main__':
+    db.init_app(app)
+    app.run()

@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# project
 from ..database import db
-from common import constTablePrefix
+from .common import constTablePrefix
+from ..g_orm_def import GUserMachines
 
+# self package
 from datetime import datetime
 
 
@@ -183,8 +186,12 @@ class User(db.Model):
     资源专区的用户
     '''
     __tablename__ = constTablePrefix + 'user'
+    __table_args__ = {'extend_existing': True}
 
-    id = db.Column(db.String(255), primary_key=True, doc='唯一ID')  # 存储真实的机器码
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+
+    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), doc='唯一ID')  # 存储真实的机器码
+    machine = db.relationship('GUserMachines', backref='gif_user')
     create_time = db.Column(db.DateTime)
 
 
@@ -347,6 +354,7 @@ class TraceSetShare(db.Model):
 RelationShip
 '''
 
+## DataTypes
 DataTypes.categories = db.relationship('Categories', backref='type', order_by=Categories.id)
 DataTypes.tags = db.relationship('Tags', backref='type', order_by=Tags.id)
 
