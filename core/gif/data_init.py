@@ -72,44 +72,101 @@ def __getSpecTagItem(name, description, category, type):
     return item
 
 
-def __init_data_for_item(type_item_category, type_item_tag):
+def __initDataForItemAndSetCommon(type_item_category, type_item_tag):
     '''
-    参照网易云音乐对歌单的标签分类 {Item}
+    参照网易云音乐对歌单的标签分类 {Item}, 参照网易云音乐对歌单的标签分类 {Set}
     :param type_item_category:
     :param type_item_tag:
     :return:
     '''
-    curCategory = __getSpecCategroyItem(name='animal', description='动物', type=type_item_category)
-    __getSpecTagItem(name='dog', description='狗', category=curCategory, type=type_item_tag)
-    __getSpecTagItem(name='cat', description='猫', category=curCategory, type=type_item_tag)
 
-
-    curCategory = __getSpecCategroyItem(name='traffic', description='交通', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='style', description='风格', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='scene', description='场景', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='subject', description='主题', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='emotion', description='情感', type=type_item_category)
-
-
-
-def __init_data_for_set(type_item_category, type_item_tag):
     '''
-    参照网易云音乐对歌单的标签分类 {Set}
-    :param type_item_category:
-    :param type_item_tag:
-    :return:
+    与动物有关的
     '''
     curCategory = __getSpecCategroyItem(name='animal', description='动物', type=type_item_category)
     __getSpecTagItem(name='dog', description='狗', category=curCategory, type=type_item_tag)
     __getSpecTagItem(name='cat', description='猫', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='mouse', description='老鼠', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='horse', description='马', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='kangaroo', description='袋鼠', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='chicken', description='鸡', category=curCategory, type=type_item_tag)
+
+    '''
+    与科技相关
+    '''
+    curCategory = __getSpecCategroyItem(name='technology', description='科技', type=type_item_category)
+    __getSpecTagItem(name='robot', description='机器人', category=curCategory, type=type_item_tag)
 
 
+    '''
+    与交通有关的
+    '''
     curCategory = __getSpecCategroyItem(name='traffic', description='交通', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='style', description='风格', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='scene', description='场景', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='subject', description='主题', type=type_item_category)
-    curCategory = __getSpecCategroyItem(name='emotion', description='情感', type=type_item_category)
+    __getSpecTagItem(name='cat', description='小汽车', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='bus', description='公交车', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='bike', description='自行车', category=curCategory, type=type_item_tag)
 
+    '''
+    让你感觉是有什么特别的
+    '''
+    curCategory = __getSpecCategroyItem(name='style', description='风格', type=type_item_category)
+    __getSpecTagItem(name='funny', description='搞笑', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='retch', description='恶心', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='boredom', description='无聊', category=curCategory, type=type_item_tag)
+
+    '''
+    展现内容，与当时出现的天气有关
+    '''
+    curCategory = __getSpecCategroyItem(name='weather', description='天气', type=type_item_category)
+    __getSpecTagItem(name='heavyRain', description='暴雨', category=curCategory, type=type_item_tag)
+
+    '''
+    展现内容，当时出现的场景主要状态
+    '''
+    curCategory = __getSpecCategroyItem(name='scene', description='场景', type=type_item_category)
+    __getSpecTagItem(name='drive', description='驾车', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='sport', description='运动', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='race', description='比赛', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='work', description='工作', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='study', description='学习', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='rest', description='休息', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='travel', description='旅行', category=curCategory, type=type_item_tag)
+
+
+    '''
+    能让你感觉到什么，这是情感
+    '''
+    curCategory = __getSpecCategroyItem(name='emotion', description='情感', type=type_item_category)
+    __getSpecTagItem(name='nostalgic', description='怀旧', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='fresh', description='清新', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='romantic', description='浪漫', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='sexy', description='性感', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='sad', description='伤感', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='angry', description='生气', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='cure', description='治愈', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='relax', description='放松', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='lonely', description='孤独', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='affect', description='感动', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='excitement', description='兴奋', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='happy', description='快乐', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='quiet', description='安静', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='miss', description='思念', category=curCategory, type=type_item_tag)
+
+    '''
+    以一种话题为依据的，这是主题
+    '''
+    curCategory = __getSpecCategroyItem(name='subject', description='主题', type=type_item_category)
+    __getSpecTagItem(name='movie', description='影视', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='anime', description='动漫', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='show', description='演出、节目', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='schoolyard', description='校园', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='game', description='游戏', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='classical', description='经典', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='office', description='办公室', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='girl', description='美女', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='funny', description='搞笑', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='rank', description='榜单', category=curCategory, type=type_item_tag)
+    __getSpecTagItem(name='hot', description='最受欢迎', category=curCategory, type=type_item_tag)
 
 def init_all():
     '''
@@ -126,7 +183,7 @@ def init_all():
     type_set_tag = __getSpecDataTypeItem(name='SetTag', description='Set标签的类型')
     type_user_analysis = __getSpecDataTypeItem(name='AnalysisType', description='分析数据类型')
 
-    __init_data_for_item(type_item_category, type_item_tag)
-    __init_data_for_set(type_set_category, type_set_tag)
+    __initDataForItemAndSetCommon(type_item_category, type_item_tag)
+    __initDataForItemAndSetCommon(type_set_category, type_set_tag)
 
     db.session.commit()
