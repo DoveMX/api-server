@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from api.core.database import db
+from api.dovemax.database import db
 from uuid import uuid4
 from datetime import datetime
 
+def retain():
+    return True
 
 def getNewUUID():
     return uuid4().hex
 
+
+constSchema = 'GLOB'
 
 class GUser(db.Model):
     '''
@@ -16,11 +20,13 @@ class GUser(db.Model):
     '''
     __tablename__ = 'users'
 
-    id = db.Column(db.String(255), primary_key=True, doc='唯一ID')
+    id = db.Column(db.String(255), default=getNewUUID, primary_key=True, doc='唯一ID')
     name = db.Column(db.String(255), nullable=False, doc='数据类型的名称')
     description = db.Column(db.String(400), nullable=False, doc='数据类型的描述')
 
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 
 
 class GUserMachines(db.Model):
@@ -36,4 +42,5 @@ class GUserMachines(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+## 创建关系
 GUser.machines = db.relationship('GUserMachines', backref='user', order_by=GUserMachines.id)
