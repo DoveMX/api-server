@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from api.dovemax.database import db
+from api.gmagon.database import db
 from uuid import uuid4
 from datetime import datetime
 

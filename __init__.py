@@ -1,13 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import sys
+if sys.version_info.major < 3:
+    reload(sys)
+sys.setdefaultencoding('utf8')
+
+
+
 from flask import Flask
 from flask_restful import Resource, Api
 
-from dovemax.database import db
-from dovemax.datainit import init as plugin_data_init
-from dovemax.resources import install as plugin_resources_install
+from gmagon.database import db
+from gmagon.datainit import init as plugin_data_init
+from gmagon.resources import install as plugin_resources_install
 
+print('system-default-encoding: ' + sys.getdefaultencoding())
 
 class System(Flask):
     """继承Flask，创建自定义类
