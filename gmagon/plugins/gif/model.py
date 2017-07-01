@@ -3,7 +3,6 @@
 
 # self package
 from datetime import datetime
-import json
 
 # project
 from api.gmagon.database import db

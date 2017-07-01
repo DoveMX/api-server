@@ -4,9 +4,19 @@
 import json
 from flask_restful import Resource
 
+
 from api.gmagon.plugins.gif.constant import constUriPrefix
 from api.gmagon.plugins.gif.model import DataTypes, Categories
 from api.gmagon.plugins.gif.data import api_getSpecCategroyItem, api_getSpecDataTypeItem, api_getSpecTagItem
+
+
+class TestUnicode(Resource):
+    def get(self):
+        return {
+            'status': 'success',
+            'message': '中文Hello'
+        }
+
 
 class GetDataType(Resource):
     def get(self):
@@ -95,6 +105,7 @@ class GetAllCategoriesAndTagsForItem(Resource):
 
 def install(api):
     """Install for RESTFull framework"""
+    api.add_resource(TestUnicode, constUriPrefix + '/v1.0.0/testunicode')
     api.add_resource(GetDataType, constUriPrefix + '/v1.0.0/getAllDataType')
     api.add_resource(GetDataTypeByName, constUriPrefix + '/v1.0.0/getDataType/<string:typename>')
     api.add_resource(GetAllCategoriesForItem, constUriPrefix + '/v1.0.0/getAllCategoriesForItem')
