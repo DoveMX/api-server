@@ -101,13 +101,19 @@ class GetAllCategoriesAndTagsForItem(Resource):
     def get(self):
         return commonGetAllCategoriesAndTags('ItemCategory', 'ItemTag')
 
-
+class GetAllCategoriesAndTagsForSet(Resource):
+    """获取Set所有分类及分类下标签结构"""
+    def get(self):
+        return commonGetAllCategoriesAndTags('SetCategory', 'SetTag')
 
 def install(api):
     """Install for RESTFull framework"""
     api.add_resource(TestUnicode, constUriPrefix + '/v1.0.0/testunicode')
+
+    ## 基础性API获取数据接口
     api.add_resource(GetDataType, constUriPrefix + '/v1.0.0/getAllDataType')
     api.add_resource(GetDataTypeByName, constUriPrefix + '/v1.0.0/getDataType/<string:typename>')
     api.add_resource(GetAllCategoriesForItem, constUriPrefix + '/v1.0.0/getAllCategoriesForItem')
     api.add_resource(GetAllCategoriesForSet, constUriPrefix + '/v1.0.0/getAllCategoriesForSet')
     api.add_resource(GetAllCategoriesAndTagsForItem, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForItem')
+    api.add_resource(GetAllCategoriesAndTagsForSet, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForSet')

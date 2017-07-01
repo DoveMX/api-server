@@ -29,6 +29,7 @@ class DataTypes(db.Model):
             'description': self.description
         }
 
+
 class Categories(db.Model):
     '''
     资源基础数据分类类型（全局类型）
@@ -79,6 +80,23 @@ class Tags(db.Model):
             'type_name': self.type.name
         }
 
+
+'''
+Many-to-Many Relationships
+'''
+tbl_item_tags = db.Table(constTablePrefix + 'item_tags',
+                         db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
+                                   primary_key=True),
+                         db.Column('tag_id', db.ForeignKey(constTablePrefix + 'tags.id'), nullable=False,
+                                   primary_key=True)
+                         )
+tbl_item_categories = db.Table(constTablePrefix + 'item_categories',
+                         db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
+                                   primary_key=True),
+                         db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'), nullable=False,
+                                   primary_key=True)
+                         )
+
 class Item(db.Model):
     '''
     资源_$_item TABLE
@@ -93,8 +111,6 @@ class Item(db.Model):
     thumb = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(400), nullable=False)
-    tags = db.Column(db.String(255))
-    categories = db.Column(db.String(255))
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')
@@ -107,6 +123,76 @@ class Item(db.Model):
     collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
     share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
 
+    tags = db.relationship('Tags', secondary=tbl_item_tags, backref=db.backref('items', lazy='dynamic'))
+    categories = db.relationship('Categories', secondary=tbl_item_categories, backref=db.backref('items', lazy='dynamic'))
+
+    def getJSON(self):
+        """
+        获取可JSON化的数据
+        :return:
+        """
+        tagsDataList = []
+        for tagObj in self.tags:
+            ele_tag = tagObj.getJSON()
+            tagsDataList.append(ele_tag)
+
+        categoriesDataList = []
+        for categoryObj in self.categories:
+            ele_category = categoryObj.getJSON()
+            categoriesDataList.append(ele_category)
+
+        return {
+            'id': self.id,
+            'name': self.name,
+            'thumb': self.thumb,
+            'url': self.url,
+            'description': self.description,
+            'create_time': self.create_time,
+
+            'active': self.active,
+            'copyright_protection': self.copyright_protection,
+            'is_shield': self.is_shield,
+            'is_removed': self.is_removed,
+
+            'download_quantity': self.download_quantity,
+            'preview_quantity': self.preview_quantity,
+            'collection_quantity': self.collection_quantity,
+            'share_quantity': self.share_quantity,
+
+            'tags': tagsDataList,
+            'categories': categoriesDataList
+        }
+
+'''
+Many-to-Many Relationships
+'''
+#Note 素材包标签表
+tbl_set_tags = db.Table(constTablePrefix + 'set_tags',
+                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
+                                   primary_key=True),
+                         db.Column('tag_id', db.ForeignKey(constTablePrefix + 'tags.id'), nullable=False,
+                                   primary_key=True)
+                         )
+
+#Note 素材包分类表
+tbl_set_categories = db.Table(constTablePrefix + 'set_categories',
+                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
+                                   primary_key=True),
+                         db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'), nullable=False,
+                                   primary_key=True)
+                         )
+
+#Note 资源&素材包表
+tbl_set_items = db.Table(constTablePrefix + 'set_items',
+                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
+                                   primary_key=True),
+                         db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
+                                   primary_key=True),
+                         db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
+                         db.Column('copyright_protection', db.Boolean, nullable=False, default=False, doc='数据项是否处于版权保护'),
+                         db.Column('is_shield', db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽'),
+                         db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
+                         )
 
 class Set(db.Model):
     '''
@@ -120,8 +206,6 @@ class Set(db.Model):
     thumb = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(400), nullable=False)
-    tags = db.Column(db.String(255))
-    categories = db.Column(db.String(255))
     create_time = db.Column(db.DateTime)
 
     active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')
@@ -134,25 +218,10 @@ class Set(db.Model):
     collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
     share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
 
+    tags = db.relationship('Tags', secondary=tbl_set_tags, backref=db.backref('sets', lazy='dynamic'))
+    categories = db.relationship('Categories', secondary=tbl_set_categories, backref=db.backref('sets', lazy='dynamic'))
+    items = db.relationship('Item', secondary=tbl_set_items, backref=db.backref('sets', lazy='dynamic'))
 
-class SetItems(db.Model):
-    '''
-    资源 素材包内容
-    '''
-    __tablename__ = constTablePrefix + 'set_items'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
-
-    active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')
-    copyright_protection = db.Column(db.Boolean, nullable=False, default=False, doc='数据项是否处于版权保护')
-    is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
-    is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
-
-    set = db.relationship("Set", backref=db.backref(__tablename__, order_by=id))
-    item = db.relationship("Item", backref=db.backref(__tablename__, order_by=id))
 
 
 ### 评论部分
@@ -167,8 +236,6 @@ class CommentsForItem(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
     comment = db.Column(db.Text(2000), nullable=False)
-    tags = db.Column(db.String(255))
-    categories = db.Column(db.String(255))
 
     parent_id = db.Column(db.Integer, db.ForeignKey(__tablename__ + '.id'))  ## 针对的上一级评论
 
@@ -193,8 +260,6 @@ class CommentsForSet(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
     comment = db.Column(db.Text(2000), nullable=False)
-    tags = db.Column(db.String(255))
-    categories = db.Column(db.String(255))
 
     parent_id = db.Column(db.Integer, db.ForeignKey(__tablename__ + '.id'))  ## 针对的上一级评论
 
@@ -220,6 +285,7 @@ class User(db.Model):
     create_time = db.Column(db.DateTime)
 
     machine = db.relationship('GUserMachines', backref='gif_user')
+
 
 class UserTrace(db.Model):
     '''
