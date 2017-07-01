@@ -118,7 +118,27 @@ class GetAllItems(Resource):
 
         return {
             'status': 'success',
-            'data': dataList
+            'data': dataList,
+            'count': len(dataList)
+        }
+
+class GetAllItemsByTagId(Resource):
+    """
+    获取所有的Item数据通过Tag
+    """
+    def get(self, tag_id):
+        dataList = []
+
+        tagsList = Tags.query.filter_by(id=tag_id).all()
+        if len(tagsList) > 0:
+            for item in tagsList[0].items:
+                ele_item = item.getJSON()
+                dataList.append(ele_item)
+
+        return {
+            'status': 'success',
+            'data': dataList,
+            'count': len(dataList)
         }
 
 def install(api):
@@ -132,4 +152,6 @@ def install(api):
     api.add_resource(GetAllCategoriesForSet, constUriPrefix + '/v1.0.0/getAllCategoriesForSet')
     api.add_resource(GetAllCategoriesAndTagsForItem, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForItem')
     api.add_resource(GetAllCategoriesAndTagsForSet, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForSet')
+
     api.add_resource(GetAllItems, constUriPrefix + '/v1.0.0/getAllItems')
+    api.add_resource(GetAllItemsByTagId, constUriPrefix + '/v1.0.0/getAllItemsByTagId/<int:tag_id>')
