@@ -6,7 +6,7 @@ from datetime import datetime
 
 # project
 from api.gmagon.database import db
-from api.gmagon.plugins.gif.constant import constTablePrefix
+from api.gmagon.plugins.gif.util import constTablePrefix, format_datetime
 
 
 class DataTypes(db.Model):
@@ -147,7 +147,7 @@ class Item(db.Model):
             'thumb': self.thumb,
             'url': self.url,
             'description': self.description,
-            'create_time': self.create_time,
+            'create_time': format_datetime(self.create_time),
 
             'active': self.active,
             'copyright_protection': self.copyright_protection,

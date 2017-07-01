@@ -4,7 +4,6 @@
 from api.gmagon.database import db
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags
 
-
 def __checkSessionAdd(data_item):
     if data_item:
         db.session.add(data_item)
@@ -68,7 +67,7 @@ def __getSpecTagItem(name, description='', category=None, type=None, createNew=T
     :return:
     '''
     item = None
-    ele_list = Tags.query.filter_by(name=name, description=description, type=type, category=category).all()
+    ele_list = Tags.query.filter_by(name=name, type=type, category=category).all()
     if len(ele_list) < 1:
         if createNew:
             item = Tags(name=name, description=description, type=type, category=category)
@@ -198,7 +197,16 @@ def init_all():
     __initDataForItemAndSetCommon(type_item_category, type_item_tag)
     __initDataForItemAndSetCommon(type_set_category, type_set_tag)
 
+    # 交叉使用import包，非全局引用，有效处理
+    from api.gmagon.plugins.gif.test import init_test_data
+    init_test_data()
+
     db.session.commit()
+
+
+
+def api_checkSessionAdd(data_item):
+    return __checkSessionAdd(data_item)
 
 
 def api_getSpecDataTypeItem(name, description=''):

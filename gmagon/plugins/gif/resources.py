@@ -5,8 +5,8 @@ import json
 from flask_restful import Resource
 
 
-from api.gmagon.plugins.gif.constant import constUriPrefix
-from api.gmagon.plugins.gif.model import DataTypes, Categories
+from api.gmagon.plugins.gif.util import constUriPrefix
+from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags, Item
 from api.gmagon.plugins.gif.data import api_getSpecCategroyItem, api_getSpecDataTypeItem, api_getSpecTagItem
 
 
@@ -106,6 +106,21 @@ class GetAllCategoriesAndTagsForSet(Resource):
     def get(self):
         return commonGetAllCategoriesAndTags('SetCategory', 'SetTag')
 
+class GetAllItems(Resource):
+    """获得所有的Item数据"""
+    def get(self):
+        dataList = []
+
+        items = Item.query.filter_by().all()
+        for item in items:
+            ele_item = item.getJSON()
+            dataList.append(ele_item)
+
+        return {
+            'status': 'success',
+            'data': dataList
+        }
+
 def install(api):
     """Install for RESTFull framework"""
     api.add_resource(TestUnicode, constUriPrefix + '/v1.0.0/testunicode')
@@ -117,3 +132,4 @@ def install(api):
     api.add_resource(GetAllCategoriesForSet, constUriPrefix + '/v1.0.0/getAllCategoriesForSet')
     api.add_resource(GetAllCategoriesAndTagsForItem, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForItem')
     api.add_resource(GetAllCategoriesAndTagsForSet, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForSet')
+    api.add_resource(GetAllItems, constUriPrefix + '/v1.0.0/getAllItems')
