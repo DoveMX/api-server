@@ -141,17 +141,25 @@ class GetAllItemsByTagId(Resource):
             'count': len(dataList)
         }
 
-def install(api):
-    """Install for RESTFull framework"""
-    api.add_resource(TestUnicode, constUriPrefix + '/v1.0.0/testunicode')
+
+def __installVer_1_0_0(api):
+    pr = constUriPrefix + '/v1.0.0'
+
+    api.add_resource(TestUnicode, pr + '/testunicode')
 
     ## 基础性API获取数据接口
-    api.add_resource(GetDataType, constUriPrefix + '/v1.0.0/getAllDataType')
-    api.add_resource(GetDataTypeByName, constUriPrefix + '/v1.0.0/getDataType/<string:typename>')
-    api.add_resource(GetAllCategoriesForItem, constUriPrefix + '/v1.0.0/getAllCategoriesForItem')
-    api.add_resource(GetAllCategoriesForSet, constUriPrefix + '/v1.0.0/getAllCategoriesForSet')
-    api.add_resource(GetAllCategoriesAndTagsForItem, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForItem')
-    api.add_resource(GetAllCategoriesAndTagsForSet, constUriPrefix + '/v1.0.0/getAllCategoriesAndTagsForSet')
+    api.add_resource(GetDataType, pr + '/getAllDataType')
+    api.add_resource(GetDataTypeByName, pr + '/getDataType/<string:typename>')
+    api.add_resource(GetAllCategoriesForItem, pr + '/getAllCategoriesForItem')
+    api.add_resource(GetAllCategoriesForSet, pr + '/getAllCategoriesForSet')
+    api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/getAllCategoriesAndTagsForItem')
+    api.add_resource(GetAllCategoriesAndTagsForSet, pr + '/getAllCategoriesAndTagsForSet')
 
-    api.add_resource(GetAllItems, constUriPrefix + '/v1.0.0/getAllItems')
-    api.add_resource(GetAllItemsByTagId, constUriPrefix + '/v1.0.0/getAllItemsByTagId/<int:tag_id>')
+    api.add_resource(GetAllItems, pr + '/getAllItems')
+    api.add_resource(GetAllItemsByTagId, pr + '/getAllItemsByTagId/<int:tag_id>')
+
+
+
+def install(api):
+    """Install for RESTFull framework"""
+    __installVer_1_0_0(api)
