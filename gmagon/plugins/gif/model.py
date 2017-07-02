@@ -81,6 +81,7 @@ class Tags(db.Model):
         }
 
 
+
 '''
 Many-to-Many Relationships
 '''
@@ -91,11 +92,13 @@ tbl_item_tags = db.Table(constTablePrefix + 'item_tags',
                                    primary_key=True)
                          )
 tbl_item_categories = db.Table(constTablePrefix + 'item_categories',
-                         db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
-                                   primary_key=True),
-                         db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'), nullable=False,
-                                   primary_key=True)
-                         )
+                               db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
+                                         primary_key=True),
+                               db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'),
+                                         nullable=False,
+                                         primary_key=True)
+                               )
+
 
 class Item(db.Model):
     '''
@@ -123,8 +126,10 @@ class Item(db.Model):
     collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
     share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
 
-    tags = db.relationship('Tags', secondary=tbl_item_tags, backref=db.backref('items', lazy='dynamic'))
-    categories = db.relationship('Categories', secondary=tbl_item_categories, backref=db.backref('items', lazy='dynamic'))
+    tags = db.relationship('Tags', secondary=tbl_item_tags,
+                           backref=db.backref('items', lazy='dynamic'), lazy='dynamic')
+    categories = db.relationship('Categories', secondary=tbl_item_categories,
+                                 backref=db.backref('items', lazy='dynamic'), lazy='dynamic')
 
     def getJSON(self):
         """
@@ -163,36 +168,46 @@ class Item(db.Model):
             'categories': categoriesDataList
         }
 
+    @staticmethod
+    def sort_items_by_tag_id(tag_id):
+        return Item.query.join(tbl_item_tags,
+                               (tbl_item_tags.c.tag_id == tag_id)).filter(tbl_item_tags.c.item_id == Item.id)\
+            .order_by(Item.create_time.desc()).filter()
+
+
 '''
 Many-to-Many Relationships
 '''
-#Note 素材包标签表
+# Note 素材包标签表
 tbl_set_tags = db.Table(constTablePrefix + 'set_tags',
-                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
-                                   primary_key=True),
-                         db.Column('tag_id', db.ForeignKey(constTablePrefix + 'tags.id'), nullable=False,
-                                   primary_key=True)
-                         )
+                        db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
+                                  primary_key=True),
+                        db.Column('tag_id', db.ForeignKey(constTablePrefix + 'tags.id'), nullable=False,
+                                  primary_key=True)
+                        )
 
-#Note 素材包分类表
+# Note 素材包分类表
 tbl_set_categories = db.Table(constTablePrefix + 'set_categories',
-                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
-                                   primary_key=True),
-                         db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'), nullable=False,
-                                   primary_key=True)
-                         )
+                              db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
+                                        primary_key=True),
+                              db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'),
+                                        nullable=False,
+                                        primary_key=True)
+                              )
 
-#Note 资源&素材包表
+# Note 资源&素材包表
 tbl_set_items = db.Table(constTablePrefix + 'set_items',
                          db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
                                    primary_key=True),
                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                    primary_key=True),
                          db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
-                         db.Column('copyright_protection', db.Boolean, nullable=False, default=False, doc='数据项是否处于版权保护'),
+                         db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
+                                   doc='数据项是否处于版权保护'),
                          db.Column('is_shield', db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽'),
                          db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
                          )
+
 
 class Set(db.Model):
     '''
@@ -218,10 +233,12 @@ class Set(db.Model):
     collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
     share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
 
-    tags = db.relationship('Tags', secondary=tbl_set_tags, backref=db.backref('sets', lazy='dynamic'))
-    categories = db.relationship('Categories', secondary=tbl_set_categories, backref=db.backref('sets', lazy='dynamic'))
-    items = db.relationship('Item', secondary=tbl_set_items, backref=db.backref('sets', lazy='dynamic'))
-
+    tags = db.relationship('Tags', secondary=tbl_set_tags,
+                           backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
+    categories = db.relationship('Categories', secondary=tbl_set_categories,
+                                 backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
+    items = db.relationship('Item', secondary=tbl_set_items,
+                            backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
 
 
 ### 评论部分
@@ -273,6 +290,12 @@ class CommentsForSet(db.Model):
 
 
 ### 用户部分
+tbl_followers = db.Table(constTablePrefix + 'followers',
+                         db.Column('follower_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id')),
+                         db.Column('followed_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id'))
+                         )
+
+
 class User(db.Model):
     '''
     资源专区的用户
@@ -280,11 +303,32 @@ class User(db.Model):
     __tablename__ = constTablePrefix + 'user'
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), doc='唯一ID')  # 存储真实的机器码
     create_time = db.Column(db.DateTime)
 
+    # 关联的机器码
+    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), doc='唯一ID')  # 存储真实的机器码
     machine = db.relationship('GUserMachines', backref='gif_user')
+
+    # 关注与被关注
+    followed = db.relationship('User',
+                               secondary=tbl_followers,
+                               primaryjoin=(tbl_followers.c.follower_id == id),
+                               secondaryjoin=(tbl_followers.c.followed_id == id),
+                               backref=db.backref('followers', lazy='dynamic'),
+                               lazy='dynamic')
+
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followed.append(user)
+            return self
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followed.remove(user)
+            return self
+
+    def is_following(self, user):
+        return self.followed.filter(tbl_followers.c.followed_id == user.id).count() > 0
 
 
 class UserTrace(db.Model):
