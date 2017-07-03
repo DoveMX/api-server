@@ -40,6 +40,7 @@ class Categories(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    thumb = db.Column(db.String(255), default='')
     description = db.Column(db.String(400), nullable=False)
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'categories.id'), nullable=True)
@@ -48,6 +49,7 @@ class Categories(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'thumb': self.thumb,
             'description': self.description,
             'type_id': self.type_id,
             'type_name': self.type.name,
@@ -65,6 +67,7 @@ class Tags(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    thumb = db.Column(db.String(255), default='')
     description = db.Column(db.String(400), nullable=False)
     category_id = db.Column(db.ForeignKey(constTablePrefix + 'categories.id'))
     type_id = db.Column(db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
@@ -73,6 +76,7 @@ class Tags(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'thumb': self.thumb,
             'description': self.description,
             'category_id': self.category_id,
             'category_name': self.category.name,
@@ -172,7 +176,14 @@ class Item(db.Model):
     def sort_items_by_tag_id(tag_id):
         return Item.query.join(tbl_item_tags,
                                (tbl_item_tags.c.tag_id == tag_id)).filter(tbl_item_tags.c.item_id == Item.id)\
-            .order_by(Item.create_time.desc()).filter()
+            .order_by(Item.id.desc()).filter()
+
+
+    @staticmethod
+    def sort_items_by_category_id(category_id):
+        return Item.query.join(tbl_item_categories,
+                               (tbl_item_categories.c.category_id == category_id)).filter(tbl_item_categories.c.item_id == Item.id)\
+            .order_by(Item.id.desc()).filter()
 
 
 '''
@@ -239,6 +250,20 @@ class Set(db.Model):
                                  backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
     items = db.relationship('Item', secondary=tbl_set_items,
                             backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
+
+
+    @staticmethod
+    def sort_sets_by_tag_id(tag_id):
+        return Set.query.join(tbl_set_tags,
+                               (tbl_set_tags.c.tag_id == tag_id)).filter(tbl_set_tags.c.set_id == Set.id)\
+            .order_by(Set.id.desc()).filter()
+
+    @staticmethod
+    def sort_sets_by_category_id(category_id):
+        return Item.query.join(tbl_set_categories,
+                               (tbl_set_categories.c.category_id == category_id)).filter(tbl_set_categories.c.set_id == Set.id)\
+            .order_by(Item.id.desc()).filter()
+
 
 
 ### 评论部分
