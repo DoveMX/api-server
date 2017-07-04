@@ -27,20 +27,18 @@ def __getDataItem(cls=None, name='', thumb='', url='', description='', createNew
 
 
 def init_test_data():
-    res_item_list = __init_common_items(category_name='scene', tag_name='race', count=500)
-    res_set_list = __init_common_sets(category_name='scene', tag_name='race', count=20)
+    res_item_list = __init_common_items(category_name='scene', tag_name='race', count=20)
+    res_set_list = __init_common_sets(category_name='scene', tag_name='race', count=2)
 
-    for i in range(200):
-        for i_set in range(len(res_set_list)):
-            res_set = res_set_list[i_set]
-            res_item = res_item_list[i]
-            if res_item not in res_set.items:
-                res_set.items.append(res_item)
+    res_set = res_set_list[0]
+    for i in range(len(res_item_list)):
+        if i%2 == 0:
+            res_set.items.append(res_item_list[i])
             api_checkSessionAdd(res_set)
 
 
 
-    __init_common_items(category_name='style', tag_name='funny', count=300)
+    __init_common_items(category_name='style', tag_name='funny', count=10)
 
 
 def __init_common_items(category_name='scene', tag_name='race', count=20):

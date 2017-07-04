@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-from flask_restful import Resource, reqparse
+import types
 
+#: lib
+from flask_restful import Resource, reqparse
+from sqlalchemy import util
+
+from api.gmagon.database import db
 from api.gmagon.plugins.gif.util import constUriPrefix
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags, Item, Set
 from api.gmagon.plugins.gif.data import api_getSpecCategroyItem, api_getSpecDataTypeItem, api_getSpecTagItem
@@ -182,10 +187,22 @@ def __installVer_1_0_0(api):
             if query is not None:
                 paginate = query.paginate(page=page, per_page=per_page, error_out=False)
                 item_list = paginate.items
+
                 if len(item_list) > 0:
                     for item in item_list:
-                        ele_item = item.getJSON()
-                        data_list.append(ele_item)
+                        if isinstance(item, db.Model):
+                            ele_item = item.getJSON()
+                            data_list.append(ele_item)
+                        else:
+                            ele_item = {}
+                            for i_field in range(len(item)):
+                                field_ele_obj = item[i_field]
+                                field_name = item._fields[i_field]
+                                if isinstance(field_ele_obj, db.Model):
+                                    ele_item[field_name] = field_ele_obj.getJSON()
+                                else:
+                                    ele_item[field_name] = field_ele_obj
+                            data_list.append(ele_item)
 
                 return {
                     'status': 'success',

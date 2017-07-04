@@ -6,7 +6,8 @@ from datetime import datetime
 
 # libs
 from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.orm.collections import attribute_mapped_collection
+from sqlalchemy.orm.collections import column_mapped_collection
+from sqlalchemy.orm import aliased
 
 # project
 from api.gmagon.database import db
@@ -459,9 +460,7 @@ class Set(db.Model):
                                  backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
     items = db.relationship('Item', secondary=tbl_set_items,
                             primaryjoin=(id == tbl_set_items.c.set_id),
-                            order_by=tbl_set_items.c.order,
-                            # collection_class=ordering_list('order'),
-                            collection_class=attribute_mapped_collection('order'),
+                            order_by=tbl_set_items.c.order.asc(),
                             backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
 
     # 跟踪信息
@@ -539,20 +538,20 @@ class Set(db.Model):
             .order_by(Set.id.desc()).filter()
 
     @staticmethod
-    def sort_items_by_set_id0(set_id):
-        return Item.query.join(tbl_set_items,
-                               (tbl_set_items.c.set_id == set_id)).filter(tbl_set_items.c.set_id == Set.id) \
-            .filter(tbl_set_items.c.item_id == Item.id) \
-            .order_by(tbl_set_items.c.order.asc()).filter()
-
-    @staticmethod
     def sort_items_by_set_id(set_id):
-        cur_set = Set.query.filter_by(id=set_id).first()
-        query = None
-        if cur_set:
-            query = cur_set.items
+        use_orm = False
+        if use_orm:
+            cur_set = Set.query.filter_by(id=set_id).first()
+            query = None
+            if cur_set:
+                query = cur_set.items
 
-        return query
+            return query
+        else:
+            return db.session.query(Item, tbl_set_items.c.order).join(tbl_set_items,
+                                   (tbl_set_items.c.set_id == set_id)).filter(tbl_set_items.c.item_id == Item.id) \
+                .order_by(tbl_set_items.c.order.asc()).filter()
+
 
     @staticmethod
     def common_sort_users_by_set_id(set_id, props='download_users'):
@@ -626,7 +625,9 @@ Categories.tags = db.relationship('Tags', backref='category', order_by=Tags.id)
 # CommentsForItem
 CommentsForItem.children = db.relationship('CommentsForItem', backref='parent', remote_side=CommentsForItem.id)
 CommentsForItem.item = db.relationship('Item', backref='comments', order_by=CommentsForItem.id)
+CommentsForItem.user = db.relationship('User', backref='item_comments', order_by=CommentsForItem.id)
 
 # CommentsForSet
 CommentsForSet.children = db.relationship('CommentsForSet', backref='parent', remote_side=CommentsForSet.id)
 CommentsForSet.set = db.relationship('Set', backref='comments', order_by=CommentsForSet.id)
+CommentsForSet.user = db.relationship('User', backref='set_comments', order_by=CommentsForSet.id)
