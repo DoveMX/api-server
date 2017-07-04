@@ -178,18 +178,35 @@ def __installVer_1_0_0(api):
             per_page = args.per_page
 
             data_list = []
-            paginate = query.paginate(page=page, per_page=per_page, error_out=False)
-            item_list = paginate.items
-            if len(item_list) > 0:
-                for item in item_list:
-                    ele_item = item.getJSON()
-                    data_list.append(ele_item)
 
-            return {
-                'status': 'success',
-                'data': data_list,
-                'count': len(data_list)
-            }
+            if query is not None:
+                paginate = query.paginate(page=page, per_page=per_page, error_out=False)
+                item_list = paginate.items
+                if len(item_list) > 0:
+                    for item in item_list:
+                        ele_item = item.getJSON()
+                        data_list.append(ele_item)
+
+                return {
+                    'status': 'success',
+                    'data': data_list,
+                    'count': len(data_list),
+                    'paginate':{
+                        'prev_num': paginate.prev_num if paginate.prev_num else 0, # 上一页页码数
+                        'next_num': paginate.next_num if paginate.prev_num else 0, # 下一页页码数
+                        'pages': paginate.pages, # 总页数
+                        'page': paginate.page, # 当前页的页码(从1开始)
+                        'per_page': paginate.per_page, # 每页显示的数量
+                        'total': paginate.total # 查询返回的记录总数
+                    }
+                }
+            else:
+                return {
+                    'status': 'success',
+                    'data': data_list,
+                    'count': len(data_list)
+                }
+
 
     """
     Item相关的API资源声明
@@ -237,12 +254,6 @@ def __installVer_1_0_0(api):
             """
             return self.common_post(Item.sort_items_by_category_id(category_id))
 
-    class ResItemsBySetId(PaginateEnable, Resource):
-        def __init__(self):
-            super(self.__class__, self).__init__()
-
-        def post(self, set_id):
-            pass
 
     """
     Set相关的API资源声明
@@ -288,6 +299,20 @@ def __installVer_1_0_0(api):
             """
             return self.common_post(Set.sort_sets_by_category_id(category_id))
 
+    class ResSetItemsBySetId(PaginateEnable, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+
+        def get(self, set_id):
+            return CommonUtil.common_get_data_ex(Set.query.filter_by(id=set_id), 'items')
+
+        def post(self, set_id):
+            """
+            curl test:
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_items/1 -d "{\"page\":1, \"per_page\":20}" -X POST -v
+            """
+            return self.common_post(Set.sort_items_by_set_id(set_id))
     """
     以下是API路由配置
     """
@@ -312,6 +337,15 @@ def __installVer_1_0_0(api):
     api.add_resource(ResSets, pr + '/sets', '/sets/<int:set_id>', endpoint='sets')
     api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
     api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')
+    api.add_resource(ResSetItemsBySetId, pr + '/sets_items/<int:set_id>', endpoint='sets_items')
+
+    # Comments for item
+
+
+    # Comments for Set
+
+
+    #
 
 
 def install(api):

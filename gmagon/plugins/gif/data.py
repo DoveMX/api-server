@@ -16,14 +16,14 @@ def __getSpecDataTypeItem(name, description='', createNew=True):
     :param description:
     :return:
     '''
-    ele_list = DataTypes.query.filter_by(name=name).all()
+    ele = DataTypes.query.filter_by(name=name).first()
     item = None
-    if len(ele_list) < 1:
+    if ele is None:
         if createNew:
             item = DataTypes(name=name, description=description)
             __checkSessionAdd(item)
     else:
-        item = ele_list[0]
+        item = ele
 
     return item
 
@@ -37,14 +37,14 @@ def __getSpecCategroyItem(name, description='', type=None, parent=None, createNe
     :param parent:
     :return:
     '''
-    ele_list = []
+    ele = None
     if parent:
-        ele_list = Categories.query.filter_by(name=name, type_id=type.id, parent_id=parent.id).all()
+        ele = Categories.query.filter_by(name=name, type_id=type.id, parent_id=parent.id).first()
     else:
-        ele_list = Categories.query.filter_by(name=name, type_id=type.id).all()
+        ele = Categories.query.filter_by(name=name, type_id=type.id).first()
 
     item = None
-    if len(ele_list) < 1:
+    if ele is None:
         if createNew:
             if parent:
                 item = Categories(name=name, description=description, type=type, parent=parent)
@@ -52,7 +52,7 @@ def __getSpecCategroyItem(name, description='', type=None, parent=None, createNe
                 item = Categories(name=name, description=description, type=type)
             __checkSessionAdd(item)
     else:
-        item = ele_list[0]
+        item = ele
 
     return item
 
@@ -67,13 +67,13 @@ def __getSpecTagItem(name, description='', category=None, type=None, createNew=T
     :return:
     '''
     item = None
-    ele_list = Tags.query.filter_by(name=name, type=type, category=category).all()
-    if len(ele_list) < 1:
+    ele = Tags.query.filter_by(name=name, type=type, category=category).first()
+    if ele is None:
         if createNew:
             item = Tags(name=name, description=description, type=type, category=category)
             __checkSessionAdd(item)
     else:
-        item = ele_list[0]
+        item = ele
 
     return item
 
@@ -186,6 +186,7 @@ def init_all():
     :return:
     '''
     print('call one ...')
+    # return
 
     type_data = __getSpecDataTypeItem(name='Data', description='基础的数据类型')
     type_item_category = __getSpecDataTypeItem(name='ItemCategory', description='Item分类的类型')

@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# self package
+# system package
 from datetime import datetime
+
+# libs
+from sqlalchemy.ext.orderinglist import ordering_list
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 # project
 from api.gmagon.database import db
@@ -85,6 +89,47 @@ class Tags(db.Model):
         }
 
 
+### 用户部分
+tbl_followers = db.Table(constTablePrefix + 'followers',
+                         db.Column('follower_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id')),
+                         db.Column('followed_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id'))
+                         )
+
+
+class User(db.Model):
+    '''
+    资源专区的用户
+    '''
+    __tablename__ = constTablePrefix + 'user'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # 关联的机器码
+    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), doc='唯一ID')  # 存储真实的机器码
+    machine = db.relationship('GUserMachines', backref='gif_user')
+
+    # 关注与被关注
+    followed = db.relationship('User',
+                               secondary=tbl_followers,
+                               primaryjoin=(tbl_followers.c.follower_id == id),
+                               secondaryjoin=(tbl_followers.c.followed_id == id),
+                               backref=db.backref('followers', lazy='dynamic'),
+                               lazy='dynamic')
+
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followed.append(user)
+            return self
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followed.remove(user)
+            return self
+
+    def is_following(self, user):
+        return self.followed.filter(tbl_followers.c.followed_id == user.id).count() > 0
+
 
 '''
 Many-to-Many Relationships
@@ -93,15 +138,58 @@ tbl_item_tags = db.Table(constTablePrefix + 'item_tags',
                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                    primary_key=True),
                          db.Column('tag_id', db.ForeignKey(constTablePrefix + 'tags.id'), nullable=False,
-                                   primary_key=True)
+                                   primary_key=True),
+                         db.Column('create_time', db.DateTime, default=datetime.utcnow)
                          )
 tbl_item_categories = db.Table(constTablePrefix + 'item_categories',
                                db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                          primary_key=True),
                                db.Column('category_id', db.ForeignKey(constTablePrefix + 'categories.id'),
                                          nullable=False,
-                                         primary_key=True)
+                                         primary_key=True),
+                               db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                )
+
+'''下载
+'''
+tbl_item_trace_downloads = db.Table(constTablePrefix + 'trace_item_downloads',
+                                    db.Column('id', db.Integer,
+                                              db.Sequence(constTablePrefix + 'trace_item_downloads' + '_id_seq'),
+                                              autoincrement=True, primary_key=True),
+                                    db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
+                                    db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                    db.Column('createtime', db.DateTime, default=datetime.utcnow)
+                                    )
+'''浏览，类似于试听
+'''
+tbl_item_trace_previews = db.Table(constTablePrefix + 'trace_item_previews',
+                                   db.Column('id',db.Integer,
+                                             db.Sequence(constTablePrefix + 'trace_item_previews' + '_id_seq'),
+                                             autoincrement=True, primary_key=True),
+                                   db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
+                                   db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                   db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                   )
+
+'''收藏
+'''
+tbl_item_trace_collections = db.Table(constTablePrefix + 'trace_item_collections',
+                                      db.Column('id',db.Integer,
+                                                db.Sequence(constTablePrefix + 'trace_item_collections' + '_id_seq'),
+                                                autoincrement=True, primary_key=True),
+                                      db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
+                                      db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                      db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                      )
+'''分享
+'''
+tbl_item_trace_shares = db.Table(constTablePrefix + 'trace_item_shares',
+                                 db.Column('id',db.Integer, db.Sequence(constTablePrefix + 'trace_item_shares' + '_id_seq'),
+                                           autoincrement=True, primary_key=True),
+                                 db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
+                                 db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                 db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                 )
 
 
 class Item(db.Model):
@@ -125,15 +213,22 @@ class Item(db.Model):
     is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
     is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
 
-    download_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被下载的次数')
-    preview_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被浏览的次数')
-    collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
-    share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
-
+    '''Relations
+    '''
     tags = db.relationship('Tags', secondary=tbl_item_tags,
                            backref=db.backref('items', lazy='dynamic'), lazy='dynamic')
     categories = db.relationship('Categories', secondary=tbl_item_categories,
                                  backref=db.backref('items', lazy='dynamic'), lazy='dynamic')
+
+    # 跟踪信息
+    download_users = db.relationship('User', secondary=tbl_item_trace_downloads,
+                                     backref=db.backref('download_items', lazy='dynamic'), lazy='dynamic')
+    preview_users = db.relationship('User', secondary=tbl_item_trace_previews,
+                                    backref=db.backref('preview_items', lazy='dynamic'), lazy='dynamic')
+    collection_users = db.relationship('User', secondary=tbl_item_trace_collections,
+                                       backref=db.backref('collection_items', lazy='dynamic'), lazy='dynamic')
+    share_users = db.relationship('User', secondary=tbl_item_trace_shares,
+                                  backref=db.backref('share_items', lazy='dynamic'), lazy='dynamic')
 
     def getJSON(self):
         """
@@ -150,6 +245,11 @@ class Item(db.Model):
             ele_category = categoryObj.getJSON()
             categoriesDataList.append(ele_category)
 
+        download_quantity = self.download_users.count()  # '被下载的次数'
+        preview_quantity = self.preview_users.count()  # '被浏览的次数'
+        collection_quantity = self.collection_users.count()  # '被收藏的次数'
+        share_quantity = self.share_users.count()  # 被分享的次数'
+
         return {
             'id': self.id,
             'name': self.name,
@@ -163,10 +263,10 @@ class Item(db.Model):
             'is_shield': self.is_shield,
             'is_removed': self.is_removed,
 
-            'download_quantity': self.download_quantity,
-            'preview_quantity': self.preview_quantity,
-            'collection_quantity': self.collection_quantity,
-            'share_quantity': self.share_quantity,
+            'download_quantity': download_quantity,
+            'preview_quantity': preview_quantity,
+            'collection_quantity': collection_quantity,
+            'share_quantity': share_quantity,
 
             'tags': tagsDataList,
             'categories': categoriesDataList
@@ -175,14 +275,14 @@ class Item(db.Model):
     @staticmethod
     def sort_items_by_tag_id(tag_id):
         return Item.query.join(tbl_item_tags,
-                               (tbl_item_tags.c.tag_id == tag_id)).filter(tbl_item_tags.c.item_id == Item.id)\
+                               (tbl_item_tags.c.tag_id == tag_id)).filter(tbl_item_tags.c.item_id == Item.id) \
             .order_by(Item.id.desc()).filter()
-
 
     @staticmethod
     def sort_items_by_category_id(category_id):
         return Item.query.join(tbl_item_categories,
-                               (tbl_item_categories.c.category_id == category_id)).filter(tbl_item_categories.c.item_id == Item.id)\
+                               (tbl_item_categories.c.category_id == category_id)).filter(
+            tbl_item_categories.c.item_id == Item.id) \
             .order_by(Item.id.desc()).filter()
 
 
@@ -212,6 +312,7 @@ tbl_set_items = db.Table(constTablePrefix + 'set_items',
                                    primary_key=True),
                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                    primary_key=True),
+                         db.Column('order', db.Integer, nullable=False, default=0, doc='排序'),
                          db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
                          db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
                                    doc='数据项是否处于版权保护'),
@@ -232,7 +333,7 @@ class Set(db.Model):
     thumb = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(400), nullable=False)
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')
     copyright_protection = db.Column(db.Boolean, nullable=False, default=False, doc='数据项是否处于版权保护')
@@ -245,25 +346,91 @@ class Set(db.Model):
     share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
 
     tags = db.relationship('Tags', secondary=tbl_set_tags,
+                           primaryjoin=id == tbl_set_tags.c.set_id,
                            backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
     categories = db.relationship('Categories', secondary=tbl_set_categories,
+                                 primaryjoin=id == tbl_set_categories.c.set_id,
                                  backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
     items = db.relationship('Item', secondary=tbl_set_items,
+                            primaryjoin=(id == tbl_set_items.c.set_id),
+                            order_by=tbl_set_items.c.order,
+                            # collection_class=ordering_list('order'),
+                            collection_class=attribute_mapped_collection('order'),
                             backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
 
+    def getJSON(self):
+        """
+        获取可JSON化的数据
+        :return:
+        """
+        tagsDataList = []
+        for tagObj in self.tags:
+            ele_tag = tagObj.getJSON()
+            tagsDataList.append(ele_tag)
+
+        categoriesDataList = []
+        for categoryObj in self.categories:
+            ele_category = categoryObj.getJSON()
+            categoriesDataList.append(ele_category)
+
+        item_data_list = []
+        for item in self.items:
+            ele = item.getJSON()
+            item_data_list.append(ele)
+
+        return {
+            'id': self.id,
+            'name': self.name,
+            'thumb': self.thumb,
+            'url': self.url,
+            'description': self.description,
+            'create_time': format_datetime(self.create_time),
+
+            'active': self.active,
+            'copyright_protection': self.copyright_protection,
+            'is_shield': self.is_shield,
+            'is_removed': self.is_removed,
+
+            'download_quantity': self.download_quantity,
+            'preview_quantity': self.preview_quantity,
+            'collection_quantity': self.collection_quantity,
+            'share_quantity': self.share_quantity,
+
+            'tags': tagsDataList,
+            'categories': categoriesDataList,
+            'items': item_data_list
+
+        }
 
     @staticmethod
     def sort_sets_by_tag_id(tag_id):
-        return Set.query.join(tbl_set_tags,
-                               (tbl_set_tags.c.tag_id == tag_id)).filter(tbl_set_tags.c.set_id == Set.id)\
-            .order_by(Set.id.desc()).filter()
+        cur_tag = Tags.query.filter_by(id=tag_id)
+        return cur_tag.sets
+        # return Set.query.join(tbl_set_tags,
+        #                        (tbl_set_tags.c.tag_id == tag_id)).filter(tbl_set_tags.c.set_id == Set.id)\
+        #     .order_by(Set.id.desc()).filter()
 
     @staticmethod
     def sort_sets_by_category_id(category_id):
-        return Item.query.join(tbl_set_categories,
-                               (tbl_set_categories.c.category_id == category_id)).filter(tbl_set_categories.c.set_id == Set.id)\
-            .order_by(Item.id.desc()).filter()
+        return Set.query.join(tbl_set_categories,
+                              (tbl_set_categories.c.category_id == category_id)).filter(
+            tbl_set_categories.c.set_id == Set.id) \
+            .order_by(Set.id.desc()).filter()
 
+    @staticmethod
+    def sort_items_by_set_id0(set_id):
+        return Item.query.join(tbl_set_items,
+                               (tbl_set_items.c.set_id == set_id)).filter(tbl_set_items.c.set_id == Set.id) \
+            .filter(tbl_set_items.c.item_id == Item.id) \
+            .order_by(tbl_set_items.c.order.asc()).filter()
+
+    @staticmethod
+    def sort_items_by_set_id(set_id):
+        cur_set = Set.query.filter_by(id=set_id).first()
+        if cur_set:
+            return cur_set.items
+
+        return None
 
 
 ### 评论部分
@@ -286,8 +453,8 @@ class CommentsForItem(db.Model):
 
     history = db.Column(db.Text(10000), nullable=False, default='', doc='历史记录，json数据类型')
 
-    modify_time = db.Column(db.DateTime)
-    create_time = db.Column(db.DateTime)
+    modify_time = db.Column(db.DateTime, default=datetime.utcnow)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class CommentsForSet(db.Model):
@@ -310,50 +477,8 @@ class CommentsForSet(db.Model):
 
     history = db.Column(db.Text(10000), nullable=False, default='', doc='历史记录，json数据类型')
 
-    modify_time = db.Column(db.DateTime)
-    create_time = db.Column(db.DateTime)
-
-
-### 用户部分
-tbl_followers = db.Table(constTablePrefix + 'followers',
-                         db.Column('follower_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id')),
-                         db.Column('followed_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id'))
-                         )
-
-
-class User(db.Model):
-    '''
-    资源专区的用户
-    '''
-    __tablename__ = constTablePrefix + 'user'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-    create_time = db.Column(db.DateTime)
-
-    # 关联的机器码
-    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), doc='唯一ID')  # 存储真实的机器码
-    machine = db.relationship('GUserMachines', backref='gif_user')
-
-    # 关注与被关注
-    followed = db.relationship('User',
-                               secondary=tbl_followers,
-                               primaryjoin=(tbl_followers.c.follower_id == id),
-                               secondaryjoin=(tbl_followers.c.followed_id == id),
-                               backref=db.backref('followers', lazy='dynamic'),
-                               lazy='dynamic')
-
-    def follow(self, user):
-        if not self.is_following(user):
-            self.followed.append(user)
-            return self
-
-    def unfollow(self, user):
-        if self.is_following(user):
-            self.followed.remove(user)
-            return self
-
-    def is_following(self, user):
-        return self.followed.filter(tbl_followers.c.followed_id == user.id).count() > 0
+    modify_time = db.Column(db.DateTime, default=datetime.utcnow)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class UserTrace(db.Model):
@@ -367,7 +492,7 @@ class UserTrace(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
     type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     content = db.Column(db.Text, nullable=False, default='')
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class UserPush(db.Model):
@@ -390,7 +515,7 @@ class UserPush(db.Model):
     collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
     share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
 
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class UserAnalysisAUTO(db.Model):
@@ -404,59 +529,7 @@ class UserAnalysisAUTO(db.Model):
     type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='分析的数据类型')
     content = db.Column(db.Text, nullable=False, default='', doc='分析的结果')
 
-    create_time = db.Column(db.DateTime)
-
-
-class TraceItemDownload(db.Model):
-    '''
-    跟踪资源图片的下载情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_item_download'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
-
-
-class TraceItemPreview(db.Model):
-    '''
-    跟踪资源图片的浏览情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_item_preview'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
-
-
-class TraceItemCollection(db.Model):
-    '''
-    跟踪资源图片的收藏情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_item_collection'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
-
-
-class TraceItemShare(db.Model):
-    '''
-    跟踪资源图片的收藏情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_item_share'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class TraceSetDownload(db.Model):
@@ -467,9 +540,9 @@ class TraceSetDownload(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
 
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
+    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class TraceSetPreview(db.Model):
@@ -480,9 +553,9 @@ class TraceSetPreview(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
 
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
+    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class TraceSetCollection(db.Model):
@@ -493,9 +566,9 @@ class TraceSetCollection(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
 
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
+    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class TraceSetShare(db.Model):
@@ -506,9 +579,9 @@ class TraceSetShare(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
 
-    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
+    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime)
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 '''
@@ -522,3 +595,11 @@ DataTypes.tags = db.relationship('Tags', backref='type', order_by=Tags.id)
 ##See: https://stackoverflow.com/questions/6782133/sqlalchemy-one-to-many-relationship-on-single-table-inheritance-declarative
 Categories.children = db.relationship('Categories', backref='parent', remote_side=Categories.id)
 Categories.tags = db.relationship('Tags', backref='category', order_by=Tags.id)
+
+# CommentsForItem
+CommentsForItem.children = db.relationship('CommentsForItem', backref='parent', remote_side=CommentsForItem.id)
+CommentsForItem.item = db.relationship('Item', backref='comments', order_by=CommentsForItem.id)
+
+# CommentsForSet
+CommentsForSet.children = db.relationship('CommentsForSet', backref='parent', remote_side=CommentsForSet.id)
+CommentsForSet.set = db.relationship('Set', backref='comments', order_by=CommentsForSet.id)

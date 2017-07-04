@@ -12,14 +12,14 @@ def __getDataItem(cls=None, name='', thumb='', url='', description='', createNew
     :param description:
     :return:
     '''
-    ele_list = cls.query.filter_by(name=name, thumb=thumb, url=url).all()
+    ele = cls.query.filter_by(name=name, thumb=thumb, url=url).first()
     item = None
-    if len(ele_list) < 1:
+    if ele is None:
         if createNew:
             item = cls(name=name, thumb=thumb, url=url, description=description)
             api_checkSessionAdd(item)
     else:
-        item = ele_list[0]
+        item = ele
 
     return item
 
@@ -30,12 +30,13 @@ def init_test_data():
     res_item_list = __init_common_items(category_name='scene', tag_name='race', count=500)
     res_set_list = __init_common_sets(category_name='scene', tag_name='race', count=20)
 
-    for i in range(4):
-        res_set = res_set_list[0]
-        res_item = res_item_list[i]
-        if res_item not in res_set.items:
-            res_set.items.append(res_item)
-        api_checkSessionAdd(res_set)
+    for i in range(200):
+        for i_set in range(len(res_set_list)):
+            res_set = res_set_list[i_set]
+            res_item = res_item_list[i]
+            if res_item not in res_set.items:
+                res_set.items.append(res_item)
+            api_checkSessionAdd(res_set)
 
 
 
