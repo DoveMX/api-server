@@ -574,14 +574,14 @@ class CommentsForItem(db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
-    comment = db.Column(db.Text(2000), nullable=False)
+    comment = db.Column(db.Text(12000), nullable=False)
 
     parent_id = db.Column(db.Integer, db.ForeignKey(__tablename__ + '.id'))  ## 针对的上一级评论
 
     is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
     is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
 
-    history = db.Column(db.Text(10000), nullable=False, default='', doc='历史记录，json数据类型')
+    history = db.Column(db.Text(900000), nullable=False, default='', doc='历史记录，json数据类型')
 
     modify_time = db.Column(db.DateTime, default=datetime.utcnow)
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
@@ -598,14 +598,14 @@ class CommentsForSet(db.Model):
     set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
-    comment = db.Column(db.Text(2000), nullable=False)
+    comment = db.Column(db.Text(12000), nullable=False)
 
     parent_id = db.Column(db.Integer, db.ForeignKey(__tablename__ + '.id'))  ## 针对的上一级评论
 
     is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
     is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
 
-    history = db.Column(db.Text(10000), nullable=False, default='', doc='历史记录，json数据类型')
+    history = db.Column(db.Text(900000), nullable=False, default='', doc='历史记录，json数据类型')
 
     modify_time = db.Column(db.DateTime, default=datetime.utcnow)
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
