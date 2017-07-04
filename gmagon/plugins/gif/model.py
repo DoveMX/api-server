@@ -14,10 +14,10 @@ from api.gmagon.plugins.gif.util import constTablePrefix, format_datetime
 
 
 class DataTypes(db.Model):
-    '''
+    """
     资源基础数据罗类型 （全局类型）
     类似于C语言的枚举类型，每个值必须指定
-    '''
+    """
 
     __tablename__ = constTablePrefix + 'types'
 
@@ -35,10 +35,10 @@ class DataTypes(db.Model):
 
 
 class Categories(db.Model):
-    '''
+    """
     资源基础数据分类类型（全局类型）
     支持子分类
-    '''
+    """
 
     __tablename__ = constTablePrefix + 'categories'
 
@@ -63,9 +63,9 @@ class Categories(db.Model):
 
 
 class Tags(db.Model):
-    '''
+    """
     资源基础数据标签（全局类型）
-    '''
+    """
 
     __tablename__ = constTablePrefix + 'tags'
 
@@ -89,7 +89,7 @@ class Tags(db.Model):
         }
 
 
-### 用户部分
+# 用户部分
 tbl_followers = db.Table(constTablePrefix + 'followers',
                          db.Column('follower_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id')),
                          db.Column('followed_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id'))
@@ -97,9 +97,9 @@ tbl_followers = db.Table(constTablePrefix + 'followers',
 
 
 class User(db.Model):
-    '''
+    """
     资源专区的用户
-    '''
+    """
     __tablename__ = constTablePrefix + 'user'
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
@@ -130,7 +130,6 @@ class User(db.Model):
     def is_following(self, user):
         return self.followed.filter(tbl_followers.c.followed_id == user.id).count() > 0
 
-
     def getJSON(self):
         return {
             'id': self.id,
@@ -138,9 +137,62 @@ class User(db.Model):
         }
 
 
-'''
+class UserTrace(db.Model):
+    """
+    针对用户的操作跟踪，为后面分析用户行为及数据做准备
+    """
+
+    __tablename__ = constTablePrefix + 'user_trace'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
+    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False, default='')
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class UserPush(db.Model):
+    """
+    根据用户的习惯（从用户的行为中分析得来），推荐给用户一些自动化的信息
+    """
+    __tablename__ = constTablePrefix + 'user_push'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='向谁推送')
+    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
+
+    title = db.Column(db.String(255), doc='推送内容的标题')
+    subtitle = db.Column(db.String(512), doc='推送内容的子标题')
+
+    content = db.Column(db.Text, nullable=False, default='', doc='推送的内容的JSON字符串')
+
+    download_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被下载的次数')
+    preview_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被浏览的次数')
+    collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
+    share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
+
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class UserAnalysisAUTO(db.Model):
+    """
+    根据用户的习惯（从用户的行为中分析得来），推荐给用户一些自动化的信息
+    """
+    __tablename__ = constTablePrefix + 'user_analysis_auto'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='分析谁')
+    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='分析的数据类型')
+    content = db.Column(db.Text, nullable=False, default='', doc='分析的结果')
+
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+##############
+
+"""
 Many-to-Many Relationships
-'''
+"""
 tbl_item_tags = db.Table(constTablePrefix + 'item_tags',
                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                    primary_key=True),
@@ -157,8 +209,8 @@ tbl_item_categories = db.Table(constTablePrefix + 'item_categories',
                                db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                )
 
-'''下载
-'''
+"""下载
+"""
 tbl_item_trace_downloads = db.Table(constTablePrefix + 'trace_item_downloads',
                                     db.Column('id', db.Integer,
                                               db.Sequence(constTablePrefix + 'trace_item_downloads' + '_id_seq'),
@@ -167,10 +219,10 @@ tbl_item_trace_downloads = db.Table(constTablePrefix + 'trace_item_downloads',
                                     db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
                                     db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                     )
-'''浏览，类似于试听
-'''
+"""浏览，类似于试听
+"""
 tbl_item_trace_previews = db.Table(constTablePrefix + 'trace_item_previews',
-                                   db.Column('id',db.Integer,
+                                   db.Column('id', db.Integer,
                                              db.Sequence(constTablePrefix + 'trace_item_previews' + '_id_seq'),
                                              autoincrement=True, primary_key=True),
                                    db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
@@ -178,20 +230,21 @@ tbl_item_trace_previews = db.Table(constTablePrefix + 'trace_item_previews',
                                    db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                    )
 
-'''收藏
-'''
+"""收藏
+"""
 tbl_item_trace_collections = db.Table(constTablePrefix + 'trace_item_collections',
-                                      db.Column('id',db.Integer,
+                                      db.Column('id', db.Integer,
                                                 db.Sequence(constTablePrefix + 'trace_item_collections' + '_id_seq'),
                                                 autoincrement=True, primary_key=True),
                                       db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
                                       db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
                                       db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                       )
-'''分享
-'''
+"""分享
+"""
 tbl_item_trace_shares = db.Table(constTablePrefix + 'trace_item_shares',
-                                 db.Column('id',db.Integer, db.Sequence(constTablePrefix + 'trace_item_shares' + '_id_seq'),
+                                 db.Column('id', db.Integer,
+                                           db.Sequence(constTablePrefix + 'trace_item_shares' + '_id_seq'),
                                            autoincrement=True, primary_key=True),
                                  db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
                                  db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
@@ -200,11 +253,11 @@ tbl_item_trace_shares = db.Table(constTablePrefix + 'trace_item_shares',
 
 
 class Item(db.Model):
-    '''
+    """
     资源_$_item TABLE
     资源原始数据存储
     SEE ONLINE DOCUMENT: http://docs.sqlalchemy.org/en/latest/intro.html
-    '''
+    """
 
     __tablename__ = constTablePrefix + 'item'
 
@@ -220,8 +273,8 @@ class Item(db.Model):
     is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
     is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
 
-    '''Relations
-    '''
+    """Relations
+    """
     tags = db.relationship('Tags', secondary=tbl_item_tags,
                            backref=db.backref('items', lazy='dynamic'), lazy='dynamic')
     categories = db.relationship('Categories', secondary=tbl_item_categories,
@@ -242,15 +295,15 @@ class Item(db.Model):
         获取可JSON化的数据
         :return:
         """
-        tagsDataList = []
+        tags_data_list = []
         for tagObj in self.tags:
             ele_tag = tagObj.getJSON()
-            tagsDataList.append(ele_tag)
+            tags_data_list.append(ele_tag)
 
-        categoriesDataList = []
+        categories_data_list = []
         for categoryObj in self.categories:
             ele_category = categoryObj.getJSON()
-            categoriesDataList.append(ele_category)
+            categories_data_list.append(ele_category)
 
         download_quantity = self.download_users.count()  # '被下载的次数'
         preview_quantity = self.preview_users.count()  # '被浏览的次数'
@@ -275,8 +328,8 @@ class Item(db.Model):
             'collection_quantity': collection_quantity,
             'share_quantity': share_quantity,
 
-            'tags': tagsDataList,
-            'categories': categoriesDataList
+            'tags': tags_data_list,
+            'categories': categories_data_list
         }
 
     @staticmethod
@@ -301,9 +354,9 @@ class Item(db.Model):
         return query
 
 
-'''
+"""
 Many-to-Many Relationships
-'''
+"""
 # Note 素材包标签表
 tbl_set_tags = db.Table(constTablePrefix + 'set_tags',
                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
@@ -335,51 +388,54 @@ tbl_set_items = db.Table(constTablePrefix + 'set_items',
                          db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
                          )
 
-'''下载
-'''
+"""下载
+"""
 tbl_set_trace_downloads = db.Table(constTablePrefix + 'trace_set_downloads',
-                                    db.Column('id', db.Integer,
-                                              db.Sequence(constTablePrefix + 'trace_set_downloads' + '_id_seq'),
-                                              autoincrement=True, primary_key=True),
-                                    db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
-                                    db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
-                                    db.Column('create_time', db.DateTime, default=datetime.utcnow)
-                                    )
-'''浏览，类似于试听
-'''
-tbl_set_trace_previews = db.Table(constTablePrefix + 'trace_set_previews',
-                                   db.Column('id',db.Integer,
-                                             db.Sequence(constTablePrefix + 'trace_set_previews' + '_id_seq'),
+                                   db.Column('id', db.Integer,
+                                             db.Sequence(constTablePrefix + 'trace_set_downloads' + '_id_seq'),
                                              autoincrement=True, primary_key=True),
                                    db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
                                    db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
                                    db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                    )
+"""
+浏览，类似于试听
+"""
+tbl_set_trace_previews = db.Table(constTablePrefix + 'trace_set_previews',
+                                  db.Column('id', db.Integer,
+                                            db.Sequence(constTablePrefix + 'trace_set_previews' + '_id_seq'),
+                                            autoincrement=True, primary_key=True),
+                                  db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                  db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                  db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                  )
 
-'''收藏
-'''
+"""收藏
+"""
 tbl_set_trace_collections = db.Table(constTablePrefix + 'trace_set_collections',
-                                      db.Column('id',db.Integer,
-                                                db.Sequence(constTablePrefix + 'trace_set_collections' + '_id_seq'),
-                                                autoincrement=True, primary_key=True),
-                                      db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
-                                      db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
-                                      db.Column('create_time', db.DateTime, default=datetime.utcnow)
-                                      )
-'''分享
-'''
+                                     db.Column('id', db.Integer,
+                                               db.Sequence(constTablePrefix + 'trace_set_collections' + '_id_seq'),
+                                               autoincrement=True, primary_key=True),
+                                     db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                     db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                     db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                     )
+"""分享
+"""
 tbl_set_trace_shares = db.Table(constTablePrefix + 'trace_set_shares',
-                                 db.Column('id',db.Integer, db.Sequence(constTablePrefix + 'trace_set_shares' + '_id_seq'),
-                                           autoincrement=True, primary_key=True),
-                                 db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
-                                 db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
-                                 db.Column('create_time', db.DateTime, default=datetime.utcnow)
-                                 )
+                                db.Column('id', db.Integer,
+                                          db.Sequence(constTablePrefix + 'trace_set_shares' + '_id_seq'),
+                                          autoincrement=True, primary_key=True),
+                                db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                )
+
 
 class Set(db.Model):
-    '''
+    """
     资源 素材包, 可以以专辑，歌单，资源库等分类方式出现
-    '''
+    """
 
     __tablename__ = constTablePrefix + 'set'
 
@@ -418,21 +474,20 @@ class Set(db.Model):
     share_users = db.relationship('User', secondary=tbl_set_trace_shares,
                                   backref=db.backref('share_sets', lazy='dynamic'), lazy='dynamic')
 
-
     def getJSON(self):
         """
         获取可JSON化的数据
         :return:
         """
-        tagsDataList = []
+        tags_data_list = []
         for tagObj in self.tags:
             ele_tag = tagObj.getJSON()
-            tagsDataList.append(ele_tag)
+            tags_data_list.append(ele_tag)
 
-        categoriesDataList = []
+        categories_data_list = []
         for categoryObj in self.categories:
             ele_category = categoryObj.getJSON()
-            categoriesDataList.append(ele_category)
+            categories_data_list.append(ele_category)
 
         item_data_list = []
         for item in self.items:
@@ -443,7 +498,6 @@ class Set(db.Model):
         preview_quantity = self.preview_users.count()  # '被浏览的次数'
         collection_quantity = self.collection_users.count()  # '被收藏的次数'
         share_quantity = self.share_users.count()  # 被分享的次数'
-
 
         return {
             'id': self.id,
@@ -463,8 +517,8 @@ class Set(db.Model):
             'collection_quantity': collection_quantity,
             'share_quantity': share_quantity,
 
-            'tags': tagsDataList,
-            'categories': categoriesDataList,
+            'tags': tags_data_list,
+            'categories': categories_data_list,
             'items': item_data_list
 
         }
@@ -511,9 +565,9 @@ class Set(db.Model):
 
 ### 评论部分
 class CommentsForItem(db.Model):
-    '''
+    """
     评论针对单个资源文件的
-    '''
+    """
     __tablename__ = constTablePrefix + 'comments_for_item'
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
@@ -534,9 +588,9 @@ class CommentsForItem(db.Model):
 
 
 class CommentsForSet(db.Model):
-    '''
+    """
     评论针对资源素材包
-    '''
+    """
 
     __tablename__ = constTablePrefix + 'comments_for_set'
 
@@ -557,59 +611,9 @@ class CommentsForSet(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class UserTrace(db.Model):
-    '''
-    针对用户的操作跟踪，为后面分析用户行为及数据做准备
-    '''
-
-    __tablename__ = constTablePrefix + 'user_trace'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
-    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
-    content = db.Column(db.Text, nullable=False, default='')
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class UserPush(db.Model):
-    '''
-    根据用户的习惯（从用户的行为中分析得来），推荐给用户一些自动化的信息
-    '''
-    __tablename__ = constTablePrefix + 'user_push'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='向谁推送')
-    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
-
-    title = db.Column(db.String(255), doc='推送内容的标题')
-    subtitle = db.Column(db.String(512), doc='推送内容的子标题')
-
-    content = db.Column(db.Text, nullable=False, default='', doc='推送的内容的JSON字符串')
-
-    download_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被下载的次数')
-    preview_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被浏览的次数')
-    collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
-    share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
-
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class UserAnalysisAUTO(db.Model):
-    '''
-    根据用户的习惯（从用户的行为中分析得来），推荐给用户一些自动化的信息
-    '''
-    __tablename__ = constTablePrefix + 'user_analysis_auto'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='分析谁')
-    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='分析的数据类型')
-    content = db.Column(db.Text, nullable=False, default='', doc='分析的结果')
-
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-'''
+"""
 RelationShip
-'''
+"""
 
 ## DataTypes
 DataTypes.categories = db.relationship('Categories', backref='type', order_by=Categories.id)
