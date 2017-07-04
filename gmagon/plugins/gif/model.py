@@ -25,7 +25,7 @@ class DataTypes(db.Model):
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True,
                    doc='唯一ID，ID需要自己来指定，不需要自动生成')
     name = db.Column(db.String(255), nullable=False, doc='数据类型的名称', unique=True)
-    description = db.Column(db.String(400), nullable=False, doc='数据类型的描述')
+    description = db.Column(db.String(400), nullable=False, default='', doc='数据类型的描述')
 
     def getJSON(self):
         return {
@@ -34,6 +34,8 @@ class DataTypes(db.Model):
             'description': self.description
         }
 
+    def __repr__(self):
+        return "DataTypes(%d, %s, %s)" % (self.id, self.name, self.description)
 
 class Categories(db.Model):
     """
@@ -548,7 +550,13 @@ class Set(db.Model):
 
             return query
         else:
-            return db.session.query(Item, tbl_set_items.c.order).join(tbl_set_items,
+            return db.session.query(Item,
+                                    tbl_set_items.c.order,
+                                    tbl_set_items.c.active,
+                                    tbl_set_items.c.copyright_protection,
+                                    tbl_set_items.c.is_shield,
+                                    tbl_set_items.c.is_removed,
+                                    ).join(tbl_set_items,
                                    (tbl_set_items.c.set_id == set_id)).filter(tbl_set_items.c.item_id == Item.id) \
                 .order_by(tbl_set_items.c.order.asc()).filter()
 

@@ -205,17 +205,22 @@ def init_all():
     db.session.commit()
 
 
+def api_session_commit():
+    db.session.commit()
 
 def api_checkSessionAdd(data_item):
     return __checkSessionAdd(data_item)
 
 
-def api_getSpecDataTypeItem(name, description=''):
-    return __getSpecDataTypeItem(name, description, createNew=False)
+def api_getSpecDataTypeItem(name, description='', createNew=False):
+    return __getSpecDataTypeItem(name, description, createNew=createNew)
 
+def api_getSpecDataTypeItemById(id):
+    ele = DataTypes.query.filter_by(id=id).first()
+    return ele
 
-def api_getSpecCategroyItem(name, description='', type=None, parent=None):
-    return __getSpecCategroyItem(name, description, type, parent, createNew=False)
+def api_getSpecCategroyItem(name, description='', type=None, parent=None, createNew=False):
+    return __getSpecCategroyItem(name, description, type, parent, createNew=createNew)
 
-def api_getSpecTagItem(name, description='', category=None, type=None):
-    return __getSpecTagItem(name, description, category, type, createNew=False)
+def api_getSpecTagItem(name, description='', category=None, type=None, createNew=False):
+    return __getSpecTagItem(name, description, category, type, createNew=createNew)

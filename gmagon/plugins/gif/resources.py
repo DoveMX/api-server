@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-import types
+import re
 
 #: lib
 from flask_restful import Resource, reqparse
@@ -11,7 +11,9 @@ from sqlalchemy import util
 from api.gmagon.database import db
 from api.gmagon.plugins.gif.util import constUriPrefix
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags, Item, Set
-from api.gmagon.plugins.gif.data import api_getSpecCategroyItem, api_getSpecDataTypeItem, api_getSpecTagItem
+from api.gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_getSpecCategroyItem, \
+    api_getSpecDataTypeItemById, \
+    api_getSpecDataTypeItem, api_getSpecTagItem
 
 
 def __installVer_1_0_0(api):
@@ -29,6 +31,13 @@ def __installVer_1_0_0(api):
             }
 
     class GetDataType(Resource):
+        def __init__(self):
+            self.post_parse = reqparse.RequestParser()
+            self.post_parse.add_argument('op', type=str, required=True, help='No op provided', location='json')  # 操作方式
+            self.post_parse.add_argument('data', type=dict, help='No data provided', location='json')
+
+            super(self.__class__, self).__init__()
+
         def get(self):
             dataList = DataTypes.query.filter_by().all()
             list = []
@@ -41,6 +50,56 @@ def __installVer_1_0_0(api):
                 'status': 'success',
                 'list': list,
                 'count': len(list)
+            }
+
+        def post(self):
+            """
+            创建，删除，更新
+
+            curl test:
+            # create
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/getAllDataType -d "{\"op\":\"create\",\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
+
+
+            # update
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/getAllDataType -d "{\"op\":\"update\",\"data\":{\"id\":9, \"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
+
+
+            # delete
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/getAllDataType -d "{\"op\":\"delete\",\"data\":{\"id\":9}}" -X POST -v
+
+
+            """
+            args = self.post_parse.parse_args()
+
+            op = args.op
+            data = args.data
+
+            data_item = None
+            if re.findall('create', op):
+                data_item = api_getSpecDataTypeItem(name=data['name'], description=data['description'], createNew=True)
+                api_checkSessionAdd(data_item)
+
+            elif re.findall('update', op):
+                data_item = api_getSpecDataTypeItemById(id=data['id'])
+                if data_item:
+                    for (k, v) in data.items():
+                        data_item.__setattr__(k, v)
+                    api_checkSessionAdd(data_item)
+
+            elif re.findall('delete', op):
+                data_item = api_getSpecDataTypeItemById(id=data['id'])
+                if data_item:
+                    db.session.delete(data_item)
+
+            api_session_commit()
+
+            data_list = [data_item.getJSON()] if data_item else []
+            return {
+                'status': 'success',
+                'op': op,
+                'data': data_list,
+                'count': len(data_list)
             }
 
     class GetDataTypeByName(Resource):
