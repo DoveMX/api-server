@@ -4,28 +4,28 @@
 from api.gmagon.database import db
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags
 
+
 def __checkSessionAdd(data_item):
     if data_item:
         db.session.add(data_item)
 
 
-def __getSpecDataTypeItem(name, description='', createNew=True):
-    '''
-    创建或者获取指定属性的数据类型Item
-    :param name:
-    :param description:
-    :return:
-    '''
-    ele = DataTypes.query.filter_by(name=name).first()
+def __getSpecDataByFilterByDict(cls, filter_dict={}, create_dict={}, createNew=True):
+    ele = cls.query.filter_by(**filter_dict).first()
     item = None
     if ele is None:
         if createNew:
-            item = DataTypes(name=name, description=description)
+            item = cls(**create_dict)
             __checkSessionAdd(item)
     else:
         item = ele
 
     return item
+
+
+def __getSpecDataTypeItem(name, description='', createNew=True):
+    return __getSpecDataByFilterByDict(cls=DataTypes, filter_dict={'name': name},
+                                       create_dict={'name': name, 'description': description}, createNew=createNew)
 
 
 def __getSpecCategroyItem(name, description='', type=None, parent=None, createNew=True):
@@ -208,6 +208,7 @@ def init_all():
 def api_session_commit():
     db.session.commit()
 
+
 def api_checkSessionAdd(data_item):
     return __checkSessionAdd(data_item)
 
@@ -215,12 +216,19 @@ def api_checkSessionAdd(data_item):
 def api_getSpecDataTypeItem(name, description='', createNew=False):
     return __getSpecDataTypeItem(name, description, createNew=createNew)
 
+
+def api_getSpecDataTypeItemByFilterDict(filter_dict={}, create_dict={}, createNew=True):
+    return __getSpecDataByFilterByDict(DataTypes, filter_dict, create_dict, createNew)
+
+
 def api_getSpecDataTypeItemById(id):
     ele = DataTypes.query.filter_by(id=id).first()
     return ele
 
+
 def api_getSpecCategroyItem(name, description='', type=None, parent=None, createNew=False):
     return __getSpecCategroyItem(name, description, type, parent, createNew=createNew)
+
 
 def api_getSpecTagItem(name, description='', category=None, type=None, createNew=False):
     return __getSpecTagItem(name, description, category, type, createNew=createNew)

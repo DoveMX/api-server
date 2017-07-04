@@ -13,6 +13,7 @@ from api.gmagon.plugins.gif.util import constUriPrefix
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags, Item, Set
 from api.gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_getSpecCategroyItem, \
     api_getSpecDataTypeItemById, \
+    api_getSpecDataTypeItemByFilterDict, \
     api_getSpecDataTypeItem, api_getSpecTagItem
 
 
@@ -39,11 +40,11 @@ def __installVer_1_0_0(api):
             super(self.__class__, self).__init__()
 
         def get(self):
-            dataList = DataTypes.query.filter_by().all()
+            data_list = DataTypes.query.filter_by().all()
             list = []
 
-            if len(dataList) > 0:
-                for ele in dataList:
+            if len(data_list) > 0:
+                for ele in data_list:
                     list.append(ele.getJSON())
 
             return {
@@ -54,20 +55,22 @@ def __installVer_1_0_0(api):
 
         def post(self):
             """
-            创建，删除，更新
+            创建,删除,更新,查找
 
             curl test:
             # create
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/getAllDataType -d "{\"op\":\"create\",\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
 
 
             # update
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/getAllDataType -d "{\"op\":\"update\",\"data\":{\"id\":9, \"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"data\":{\"id\":9, \"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
 
 
             # delete
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/getAllDataType -d "{\"op\":\"delete\",\"data\":{\"id\":9}}" -X POST -v
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"data\":{\"id\":9}}" -X POST -v
 
+            # find
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"find\",\"data\":{\"id\":9}}" -X POST -v
 
             """
             args = self.post_parse.parse_args()
@@ -79,20 +82,25 @@ def __installVer_1_0_0(api):
             if re.findall('create', op):
                 data_item = api_getSpecDataTypeItem(name=data['name'], description=data['description'], createNew=True)
                 api_checkSessionAdd(data_item)
+                api_session_commit()
 
             elif re.findall('update', op):
                 data_item = api_getSpecDataTypeItemById(id=data['id'])
                 if data_item:
                     for (k, v) in data.items():
-                        data_item.__setattr__(k, v)
+                        if hasattr(data_item, k):
+                            data_item.__setattr__(k, v)
                     api_checkSessionAdd(data_item)
+                    api_session_commit()
 
             elif re.findall('delete', op):
                 data_item = api_getSpecDataTypeItemById(id=data['id'])
                 if data_item:
                     db.session.delete(data_item)
+                    api_session_commit()
 
-            api_session_commit()
+            elif re.findall('find', op):
+                data_item = api_getSpecDataTypeItemByFilterDict(data, createNew=False)
 
             data_list = [data_item.getJSON()] if data_item else []
             return {
@@ -523,8 +531,8 @@ def __installVer_1_0_0(api):
     api.add_resource(TestUnicode, pr + '/testunicode')
 
     # 基础性API获取数据接口
-    api.add_resource(GetDataType, pr + '/getAllDataType')
-    api.add_resource(GetDataTypeByName, pr + '/getDataType/<string:typename>')
+    api.add_resource(GetDataType, pr + '/data_type')
+    api.add_resource(GetDataTypeByName, pr + '/data_type/<string:typename>')
     api.add_resource(GetAllCategoriesForItem, pr + '/getAllCategoriesForItem')
     api.add_resource(GetAllCategoriesForSet, pr + '/getAllCategoriesForSet')
     api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/getAllCategoriesAndTagsForItem')
