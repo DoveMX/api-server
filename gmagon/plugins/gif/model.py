@@ -45,7 +45,7 @@ class Categories(db.Model):
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     thumb = db.Column(db.String(255), default='')
-    description = db.Column(db.String(400), nullable=False)
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'categories.id'), nullable=True)
 
@@ -72,7 +72,7 @@ class Tags(db.Model):
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     thumb = db.Column(db.String(255), default='')
-    description = db.Column(db.String(400), nullable=False)
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
     category_id = db.Column(db.ForeignKey(constTablePrefix + 'categories.id'))
     type_id = db.Column(db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
 
@@ -265,7 +265,7 @@ class Item(db.Model):
     name = db.Column(db.String(255), nullable=False)
     thumb = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.String(400), nullable=False)
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')
@@ -441,9 +441,9 @@ class Set(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    thumb = db.Column(db.String(255), nullable=False)
+    thumb = db.Column(db.String(255), nullable=False, doc='封面')
     url = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.String(400), nullable=False)
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')

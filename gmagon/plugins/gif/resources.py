@@ -454,6 +454,8 @@ def __installVer_1_0_0(api):
     api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/getAllCategoriesAndTagsForItem')
     api.add_resource(GetAllCategoriesAndTagsForSet, pr + '/getAllCategoriesAndTagsForSet')
 
+    # User
+
     # Items
     api.add_resource(ResItems, pr + '/items', '/items/<int:item_id>', endpoint='items')
     api.add_resource(ResItemsByTagId, pr + '/items_by_tag_id/<int:tag_id>', endpoint='items_by_tag')
@@ -477,11 +479,9 @@ def __installVer_1_0_0(api):
                      endpoint='sets_collection_users')
     api.add_resource(ResSetShareUsersById, pr + '/sets_share_users/<int:set_id>', endpoint='sets_share_users')
 
+    # CommentsForItem
 
-    # Comments for item
-
-
-    # Comments for Set
+    # CommentsForSet
 
 
     #
