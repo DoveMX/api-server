@@ -191,13 +191,13 @@ def __installVer_1_0_0(api):
                     'status': 'success',
                     'data': data_list,
                     'count': len(data_list),
-                    'paginate':{
-                        'prev_num': paginate.prev_num if paginate.prev_num else 0, # 上一页页码数
-                        'next_num': paginate.next_num if paginate.prev_num else 0, # 下一页页码数
-                        'pages': paginate.pages, # 总页数
-                        'page': paginate.page, # 当前页的页码(从1开始)
-                        'per_page': paginate.per_page, # 每页显示的数量
-                        'total': paginate.total # 查询返回的记录总数
+                    'paginate': {
+                        'prev_num': paginate.prev_num if paginate.prev_num else 0,  # 上一页页码数
+                        'next_num': paginate.next_num if paginate.prev_num else 0,  # 下一页页码数
+                        'pages': paginate.pages,  # 总页数
+                        'page': paginate.page,  # 当前页的页码(从1开始)
+                        'per_page': paginate.per_page,  # 每页显示的数量
+                        'total': paginate.total  # 查询返回的记录总数
                     }
                 }
             else:
@@ -206,7 +206,6 @@ def __installVer_1_0_0(api):
                     'data': data_list,
                     'count': len(data_list)
                 }
-
 
     """
     Item相关的API资源声明
@@ -254,6 +253,69 @@ def __installVer_1_0_0(api):
             """
             return self.common_post(Item.sort_items_by_category_id(category_id))
 
+    class ResItemDownloadUsersById(PaginateEnable, Resource):
+        """
+        获取Item的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, item_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_download_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Item.common_sort_users_by_item_id(item_id, props='download_users'))
+
+    class ResItemPreviewUsersById(PaginateEnable, Resource):
+        """
+        获取Item的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, item_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_preview_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Item.common_sort_users_by_item_id(item_id, props='preview_users'))
+
+    class ResItemCollectionUsersById(PaginateEnable, Resource):
+        """
+        获取Item的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, item_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_collection_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Item.common_sort_users_by_item_id(item_id, props='collection_users'))
+
+    class ResItemShareUsersById(PaginateEnable, Resource):
+        """
+        获取Item的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, item_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_share_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Item.common_sort_users_by_item_id(item_id, props='share_users'))
 
     """
     Set相关的API资源声明
@@ -303,7 +365,6 @@ def __installVer_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__()
 
-
         def get(self, set_id):
             return CommonUtil.common_get_data_ex(Set.query.filter_by(id=set_id), 'items')
 
@@ -313,6 +374,71 @@ def __installVer_1_0_0(api):
             >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_items/1 -d "{\"page\":1, \"per_page\":20}" -X POST -v
             """
             return self.common_post(Set.sort_items_by_set_id(set_id))
+
+    class ResSetDownloadUsersById(PaginateEnable, Resource):
+        """
+        获取set的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, set_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_download_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Set.common_sort_users_by_set_id(set_id, props='download_users'))
+
+    class ResSetPreviewUsersById(PaginateEnable, Resource):
+        """
+        获取set的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, set_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_preview_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Set.common_sort_users_by_set_id(set_id, props='preview_users'))
+
+    class ResSetCollectionUsersById(PaginateEnable, Resource):
+        """
+        获取set的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, set_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_collection_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Set.common_sort_users_by_set_id(set_id, props='collection_users'))
+
+    class ResSetShareUsersById(PaginateEnable, Resource):
+        """
+        获取set的下载用户信息
+        """
+
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, set_id):
+            """
+            curl
+
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_share_users/1 -d "{\"page\":1, \"per_page\":2}" -X POST -v
+            """
+            return self.common_post(Set.common_sort_users_by_set_id(set_id, props='share_users'))
+
     """
     以下是API路由配置
     """
@@ -332,12 +458,25 @@ def __installVer_1_0_0(api):
     api.add_resource(ResItems, pr + '/items', '/items/<int:item_id>', endpoint='items')
     api.add_resource(ResItemsByTagId, pr + '/items_by_tag_id/<int:tag_id>', endpoint='items_by_tag')
     api.add_resource(ResItemsByCategoryId, pr + '/items_by_category_id/<int:category_id>', endpoint='items_by_category')
+    api.add_resource(ResItemDownloadUsersById, pr + '/items_download_users/<int:item_id>',
+                     endpoint='items_download_users')
+    api.add_resource(ResItemPreviewUsersById, pr + '/items_preview_users/<int:item_id>', endpoint='items_preview_users')
+    api.add_resource(ResItemCollectionUsersById, pr + '/items_collection_users/<int:item_id>',
+                     endpoint='items_collection_users')
+    api.add_resource(ResItemShareUsersById, pr + '/items_share_users/<int:item_id>', endpoint='items_share_users')
 
     # Sets
     api.add_resource(ResSets, pr + '/sets', '/sets/<int:set_id>', endpoint='sets')
     api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
     api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')
     api.add_resource(ResSetItemsBySetId, pr + '/sets_items/<int:set_id>', endpoint='sets_items')
+    api.add_resource(ResSetDownloadUsersById, pr + '/sets_download_users/<int:set_id>',
+                     endpoint='sets_download_users')
+    api.add_resource(ResSetPreviewUsersById, pr + '/sets_preview_users/<int:set_id>', endpoint='sets_preview_users')
+    api.add_resource(ResSetCollectionUsersById, pr + '/sets_collection_users/<int:set_id>',
+                     endpoint='sets_collection_users')
+    api.add_resource(ResSetShareUsersById, pr + '/sets_share_users/<int:set_id>', endpoint='sets_share_users')
+
 
     # Comments for item
 

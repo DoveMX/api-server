@@ -131,6 +131,13 @@ class User(db.Model):
         return self.followed.filter(tbl_followers.c.followed_id == user.id).count() > 0
 
 
+    def getJSON(self):
+        return {
+            'id': self.id,
+            'machine_id': self.machine_id,
+        }
+
+
 '''
 Many-to-Many Relationships
 '''
@@ -158,7 +165,7 @@ tbl_item_trace_downloads = db.Table(constTablePrefix + 'trace_item_downloads',
                                               autoincrement=True, primary_key=True),
                                     db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False),
                                     db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
-                                    db.Column('createtime', db.DateTime, default=datetime.utcnow)
+                                    db.Column('create_time', db.DateTime, default=datetime.utcnow)
                                     )
 '''浏览，类似于试听
 '''
@@ -285,6 +292,14 @@ class Item(db.Model):
             tbl_item_categories.c.item_id == Item.id) \
             .order_by(Item.id.desc()).filter()
 
+    @staticmethod
+    def common_sort_users_by_item_id(item_id, props='download_users'):
+        cur_item = Item.query.filter_by(id=item_id).first()
+        query = None
+        if cur_item:
+            query = cur_item.__getattribute__(props)
+        return query
+
 
 '''
 Many-to-Many Relationships
@@ -320,10 +335,50 @@ tbl_set_items = db.Table(constTablePrefix + 'set_items',
                          db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
                          )
 
+'''下载
+'''
+tbl_set_trace_downloads = db.Table(constTablePrefix + 'trace_set_downloads',
+                                    db.Column('id', db.Integer,
+                                              db.Sequence(constTablePrefix + 'trace_set_downloads' + '_id_seq'),
+                                              autoincrement=True, primary_key=True),
+                                    db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                    db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                    db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                    )
+'''浏览，类似于试听
+'''
+tbl_set_trace_previews = db.Table(constTablePrefix + 'trace_set_previews',
+                                   db.Column('id',db.Integer,
+                                             db.Sequence(constTablePrefix + 'trace_set_previews' + '_id_seq'),
+                                             autoincrement=True, primary_key=True),
+                                   db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                   db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                   db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                   )
+
+'''收藏
+'''
+tbl_set_trace_collections = db.Table(constTablePrefix + 'trace_set_collections',
+                                      db.Column('id',db.Integer,
+                                                db.Sequence(constTablePrefix + 'trace_set_collections' + '_id_seq'),
+                                                autoincrement=True, primary_key=True),
+                                      db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                      db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                      db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                      )
+'''分享
+'''
+tbl_set_trace_shares = db.Table(constTablePrefix + 'trace_set_shares',
+                                 db.Column('id',db.Integer, db.Sequence(constTablePrefix + 'trace_set_shares' + '_id_seq'),
+                                           autoincrement=True, primary_key=True),
+                                 db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False),
+                                 db.Column('user_id', db.ForeignKey(constTablePrefix + 'user.id'), nullable=False),
+                                 db.Column('create_time', db.DateTime, default=datetime.utcnow)
+                                 )
 
 class Set(db.Model):
     '''
-    资源 素材包
+    资源 素材包, 可以以专辑，歌单，资源库等分类方式出现
     '''
 
     __tablename__ = constTablePrefix + 'set'
@@ -340,11 +395,6 @@ class Set(db.Model):
     is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
     is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
 
-    download_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被下载的次数')
-    preview_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被浏览的次数')
-    collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
-    share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
-
     tags = db.relationship('Tags', secondary=tbl_set_tags,
                            primaryjoin=id == tbl_set_tags.c.set_id,
                            backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
@@ -357,6 +407,17 @@ class Set(db.Model):
                             # collection_class=ordering_list('order'),
                             collection_class=attribute_mapped_collection('order'),
                             backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
+
+    # 跟踪信息
+    download_users = db.relationship('User', secondary=tbl_set_trace_downloads,
+                                     backref=db.backref('download_sets', lazy='dynamic'), lazy='dynamic')
+    preview_users = db.relationship('User', secondary=tbl_set_trace_previews,
+                                    backref=db.backref('preview_sets', lazy='dynamic'), lazy='dynamic')
+    collection_users = db.relationship('User', secondary=tbl_set_trace_collections,
+                                       backref=db.backref('collection_sets', lazy='dynamic'), lazy='dynamic')
+    share_users = db.relationship('User', secondary=tbl_set_trace_shares,
+                                  backref=db.backref('share_sets', lazy='dynamic'), lazy='dynamic')
+
 
     def getJSON(self):
         """
@@ -378,6 +439,12 @@ class Set(db.Model):
             ele = item.getJSON()
             item_data_list.append(ele)
 
+        download_quantity = self.download_users.count()  # '被下载的次数'
+        preview_quantity = self.preview_users.count()  # '被浏览的次数'
+        collection_quantity = self.collection_users.count()  # '被收藏的次数'
+        share_quantity = self.share_users.count()  # 被分享的次数'
+
+
         return {
             'id': self.id,
             'name': self.name,
@@ -391,10 +458,10 @@ class Set(db.Model):
             'is_shield': self.is_shield,
             'is_removed': self.is_removed,
 
-            'download_quantity': self.download_quantity,
-            'preview_quantity': self.preview_quantity,
-            'collection_quantity': self.collection_quantity,
-            'share_quantity': self.share_quantity,
+            'download_quantity': download_quantity,
+            'preview_quantity': preview_quantity,
+            'collection_quantity': collection_quantity,
+            'share_quantity': share_quantity,
 
             'tags': tagsDataList,
             'categories': categoriesDataList,
@@ -427,10 +494,19 @@ class Set(db.Model):
     @staticmethod
     def sort_items_by_set_id(set_id):
         cur_set = Set.query.filter_by(id=set_id).first()
+        query = None
         if cur_set:
-            return cur_set.items
+            query = cur_set.items
 
-        return None
+        return query
+
+    @staticmethod
+    def common_sort_users_by_set_id(set_id, props='download_users'):
+        cur_set = Set.query.filter_by(id=set_id).first()
+        query = None
+        if cur_set:
+            query = cur_set.__getattribute__(props)
+        return query
 
 
 ### 评论部分
@@ -530,59 +606,6 @@ class UserAnalysisAUTO(db.Model):
     content = db.Column(db.Text, nullable=False, default='', doc='分析的结果')
 
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class TraceSetDownload(db.Model):
-    '''
-    跟踪资源素材包的下载情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_set_download'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class TraceSetPreview(db.Model):
-    '''
-    跟踪资源素材包的浏览情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_set_preview'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class TraceSetCollection(db.Model):
-    '''
-    跟踪资源素材包的收藏情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_set_collection'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class TraceSetShare(db.Model):
-    '''
-    跟踪资源素材包的收藏情况
-    '''
-    __tablename__ = constTablePrefix + 'trace_set_share'
-
-    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
-
-    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='谁')
-    create_time = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 '''
 RelationShip
