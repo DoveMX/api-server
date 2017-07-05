@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# system
+import types
+
+# local
 from api.gmagon.database import db
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags
 
@@ -10,12 +14,12 @@ def __checkSessionAdd(data_item):
         db.session.add(data_item)
 
 
-def __getSpecDataByFilterByDict(cls, filter_dict={}, create_dict={}, createNew=True):
+def __get_data_with_filter(cls, filter_dict={}, update_dict={}, createNew=True):
     ele = cls.query.filter_by(**filter_dict).first()
     item = None
     if ele is None:
         if createNew:
-            item = cls(**create_dict)
+            item = cls(**update_dict)
             __checkSessionAdd(item)
     else:
         item = ele
@@ -23,9 +27,16 @@ def __getSpecDataByFilterByDict(cls, filter_dict={}, create_dict={}, createNew=T
     return item
 
 
+def __get_data_with_filter_query(cls=None, filter=None):
+    if isinstance(filter, types.DictType):
+        return cls.query.filter_by(**filter)
+    elif isinstance(filter, types.ListType):
+        return cls.query.filter(*filter)
+
+
 def __getSpecDataTypeItem(name, description='', createNew=True):
-    return __getSpecDataByFilterByDict(cls=DataTypes, filter_dict={'name': name},
-                                       create_dict={'name': name, 'description': description}, createNew=createNew)
+    return __get_data_with_filter(cls=DataTypes, filter_dict={'name': name},
+                                  update_dict={'name': name, 'description': description}, createNew=createNew)
 
 
 def __getSpecCategroyItem(name, description='', type=None, parent=None, createNew=True):
@@ -217,8 +228,12 @@ def api_getSpecDataTypeItem(name, description='', createNew=False):
     return __getSpecDataTypeItem(name, description, createNew=createNew)
 
 
-def api_getSpecDataTypeItemByFilterDict(filter_dict={}, create_dict={}, createNew=True):
-    return __getSpecDataByFilterByDict(DataTypes, filter_dict, create_dict, createNew)
+def api_get_common_data(cls=None, filter_dict={}, update_dict={}, createNew=True):
+    return __get_data_with_filter(cls, filter_dict, update_dict, createNew)
+
+
+def api_get_data_with_filter_query(cls=None, filter=None):
+    return __get_data_with_filter_query(cls, filter)
 
 
 def api_getSpecDataTypeItemById(id):

@@ -13,7 +13,8 @@ from api.gmagon.plugins.gif.util import constUriPrefix
 from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags, Item, Set
 from api.gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_getSpecCategroyItem, \
     api_getSpecDataTypeItemById, \
-    api_getSpecDataTypeItemByFilterDict, \
+    api_get_common_data, \
+    api_get_data_with_filter_query, \
     api_getSpecDataTypeItem, api_getSpecTagItem
 
 
@@ -31,61 +32,89 @@ def __installVer_1_0_0(api):
                 'message': '中文Hello'
             }
 
-    class GetDataType(Resource):
-        def __init__(self):
-            self.post_parse = reqparse.RequestParser()
-            self.post_parse.add_argument('op', type=str, required=True, help='No op provided', location='json')  # 操作方式
-            self.post_parse.add_argument('data', type=dict, help='No data provided', location='json')
+    class BaseCURD:
+        def __init__(self, cls=None):
+            self.post_curd_parse = reqparse.RequestParser()
+            self.post_curd_parse.add_argument('op', type=str, required=True, help='No op provided',
+                                              location='json')  # 操作方式
+            self.post_curd_parse.add_argument('where', type=dict, required=True, help='No data provided',
+                                              location='json')
+            self.post_curd_parse.add_argument('data', type=dict, help='No data provided', location='json')
 
-            super(self.__class__, self).__init__()
+            self.get_curd_parse = reqparse.RequestParser()
+            self.get_curd_parse.add_argument('where', type=dict, required=True, help='No data provided',
+                                             location='json')
 
-        def get(self):
-            data_list = DataTypes.query.filter_by().all()
-            list = []
+            self.paginate_parse = reqparse.RequestParser()
+            self.paginate_parse.add_argument('page', type=int, help='No page provided',
+                                             location='json')
+            self.paginate_parse.add_argument('per_page', type=int, location='json')
 
-            if len(data_list) > 0:
-                for ele in data_list:
-                    list.append(ele.getJSON())
+            self.cls = cls
 
-            return {
-                'status': 'success',
-                'list': list,
-                'count': len(list)
-            }
+        def common_curd_get(self, where=None, paginateDic=None):
+            data_list = []
+            if paginateDic is not None:
+                paginate = api_get_data_with_filter_query(cls=self.cls, filter=where).paginate(**paginateDic)
+                item_list = paginate.items
 
-        def post(self):
-            """
-            创建,删除,更新,查找
+                if len(item_list) > 0:
+                    for item in item_list:
+                        if isinstance(item, db.Model):
+                            ele_item = item.getJSON()
+                            data_list.append(ele_item)
+                        else:
+                            ele_item = {}
+                            for i_field in range(len(item)):
+                                field_ele_obj = item[i_field]
+                                field_name = item._fields[i_field]
+                                if isinstance(field_ele_obj, db.Model):
+                                    ele_item[field_name] = field_ele_obj.getJSON()
+                                else:
+                                    ele_item[field_name] = field_ele_obj
+                            data_list.append(ele_item)
 
-            curl test:
-            # create
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
+                return {
+                    'status': 'success',
+                    'data': data_list,
+                    'count': len(data_list),
+                    'paginate': {
+                        'prev_num': paginate.prev_num if paginate.prev_num else 0,  # 上一页页码数
+                        'next_num': paginate.next_num if paginate.prev_num else 0,  # 下一页页码数
+                        'pages': paginate.pages,  # 总页数
+                        'page': paginate.page,  # 当前页的页码(从1开始)
+                        'per_page': paginate.per_page,  # 每页显示的数量
+                        'total': paginate.total  # 查询返回的记录总数
+                    }
+                }
+            else:
+                data_list = api_get_data_with_filter_query(cls=self.cls, filter=where).all()
+                list = []
+                if len(data_list) > 0:
+                    for ele in data_list:
+                        list.append(ele.getJSON())
 
+                return {
+                    'status': 'success',
+                    'data': list,
+                    'count': len(list)
+                }
 
-            # update
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"data\":{\"id\":9, \"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
-
-
-            # delete
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"data\":{\"id\":9}}" -X POST -v
-
-            # find
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"find\",\"data\":{\"id\":9}}" -X POST -v
-
-            """
-            args = self.post_parse.parse_args()
+        def common_curd_post(self):
+            args = self.post_curd_parse.parse_args()
 
             op = args.op
             data = args.data
+            where = args.where
 
             data_item = None
             if re.findall('create', op):
-                data_item = api_getSpecDataTypeItem(name=data['name'], description=data['description'], createNew=True)
+                data_item = api_get_common_data(cls=self.cls, filter_dict=where, update_dict=data, createNew=True)
                 api_checkSessionAdd(data_item)
                 api_session_commit()
 
             elif re.findall('update', op):
-                data_item = api_getSpecDataTypeItemById(id=data['id'])
+                data_item = api_get_common_data(cls=self.cls, filter_dict=where, update_dict=data)
                 if data_item:
                     for (k, v) in data.items():
                         if hasattr(data_item, k):
@@ -94,13 +123,10 @@ def __installVer_1_0_0(api):
                     api_session_commit()
 
             elif re.findall('delete', op):
-                data_item = api_getSpecDataTypeItemById(id=data['id'])
+                data_item = api_get_common_data(cls=self.cls, filter_dict=where, createNew=False)
                 if data_item:
                     db.session.delete(data_item)
                     api_session_commit()
-
-            elif re.findall('find', op):
-                data_item = api_getSpecDataTypeItemByFilterDict(data, createNew=False)
 
             data_list = [data_item.getJSON()] if data_item else []
             return {
@@ -110,20 +136,53 @@ def __installVer_1_0_0(api):
                 'count': len(data_list)
             }
 
-    class GetDataTypeByName(Resource):
+    class GetDataType(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(DataTypes)
+
+        def get(self):
+            """
+            1. 无分页处理
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":{\"name\":\"test\"}}" -X GET -v
+
+            2. 有分页处理
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"page\":1, \"per_page\":20, \"where\":{\"name\":\"test\"}}" -X GET -v
+            """
+
+            args = self.get_curd_parse.parse_args()
+            paginate_args = self.paginate_parse.parse_args()
+
+            if paginate_args.page and paginate_args.per_page:
+                return self.common_curd_get(args.where, {'page': paginate_args.page,
+                                                         'per_page': paginate_args.per_page,
+                                                         'error_out': False})
+            else:
+                return self.common_curd_get(args.where)
+
+        def post(self):
+            """
+            创建,删除,更新
+
+            curl test:
+            # create
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"where\":{\"name\":\"test\"},\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
+
+            # update
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"data\":{\"id\":9, \"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
+
+
+            # delete
+            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"data\":{\"id\":9}}" -X POST -v
+
+            """
+            return self.common_curd_post()
+
+    class GetDataTypeByName(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(DataTypes)
+
         def get(self, typename):
-            dataList = DataTypes.query.filter_by(name=typename).all()
-            list = []
-
-            if len(dataList) > 0:
-                for ele in dataList:
-                    list.append(ele.getJSON())
-
-            return {
-                'status': 'success',
-                'list': list,
-                'count': len(list)
-            }
+            return self.common_curd_get({'name': typename})
 
     def commonGetCategories(dataTypeName=''):
         type_item_category = api_getSpecDataTypeItem(name=dataTypeName)
@@ -237,14 +296,15 @@ def __installVer_1_0_0(api):
         """声明统一的可分页需要的参数"""
 
         def __init__(self):
-            self.post_parse = reqparse.RequestParser()
-            self.post_parse.add_argument('page', type=int, required=True, help='No page provided', location='json')
-            self.post_parse.add_argument('per_page', type=int, location='json')
+            self.post_paginate_parse = reqparse.RequestParser()
+            self.post_paginate_parse.add_argument('page', type=int, required=True, help='No page provided',
+                                                  location='json')
+            self.post_paginate_parse.add_argument('per_page', type=int, location='json')
 
         def common_post(self, query=None):
             """抽象公共的分页处理函数，针对post行为
             """
-            args = self.post_parse.parse_args()
+            args = self.post_paginate_parse.parse_args()
 
             page = args.page
             per_page = args.per_page
@@ -295,11 +355,25 @@ def __installVer_1_0_0(api):
     Item相关的API资源声明
     """
 
-    class ResItems(Resource):
+    class ResItems(BaseCURD, Resource):
         """获得所有的Item数据"""
 
+        def __init__(self):
+            super(self.__class__, self).__init__(Item)
+
         def get(self, item_id=None):
-            return CommonUtil.common_get_data(Item, item_id)
+            """
+            获取ResItems的处理
+            （1）通过参数where获取
+
+            :param item_id:
+            :return:
+            """
+            if item_id:
+                return self.common_curd_get({'id': item_id})
+
+        def post(self, item_id=None):
+            return self.common_curd_post()
 
     class ResItemsByTagId(PaginateEnable, Resource):
         """
@@ -532,6 +606,7 @@ def __installVer_1_0_0(api):
 
     # 基础性API获取数据接口
     api.add_resource(GetDataType, pr + '/data_type')
+
     api.add_resource(GetDataTypeByName, pr + '/data_type/<string:typename>')
     api.add_resource(GetAllCategoriesForItem, pr + '/getAllCategoriesForItem')
     api.add_resource(GetAllCategoriesForSet, pr + '/getAllCategoriesForSet')
@@ -542,6 +617,7 @@ def __installVer_1_0_0(api):
 
     # Items
     api.add_resource(ResItems, pr + '/items', '/items/<int:item_id>', endpoint='items')
+
     api.add_resource(ResItemsByTagId, pr + '/items_by_tag_id/<int:tag_id>', endpoint='items_by_tag')
     api.add_resource(ResItemsByCategoryId, pr + '/items_by_category_id/<int:category_id>', endpoint='items_by_category')
     api.add_resource(ResItemDownloadUsersById, pr + '/items_download_users/<int:item_id>',
