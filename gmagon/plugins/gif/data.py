@@ -14,8 +14,13 @@ def __checkSessionAdd(data_item):
         db.session.add(data_item)
 
 
-def __get_data_with_filter(cls, filter_dict={}, update_dict={}, createNew=True):
-    ele = cls.query.filter_by(**filter_dict).first()
+def __get_data_with_filter(cls, filter={}, update_dict={}, createNew=True):
+    ele = None
+    if isinstance(filter, types.DictType):
+        ele = cls.query.filter_by(**filter).first()
+    else:
+        ele = cls.query.filter(*filter).first()
+
     item = None
     if ele is None:
         if createNew:
@@ -26,6 +31,21 @@ def __get_data_with_filter(cls, filter_dict={}, update_dict={}, createNew=True):
 
     return item
 
+def __get_data_with_filter_list(cls, filter={}, update_dict={}, createNew=True):
+    ele_list = []
+    if isinstance(filter, types.DictType):
+        ele_list = cls.query.filter_by(**filter).all()
+    else:
+        ele_list = cls.query.filter(*filter).all()
+
+    if len(ele_list) == 0:
+        if createNew:
+            item = cls(**update_dict)
+            __checkSessionAdd(item)
+            ele_list.append(item)
+
+    return ele_list
+
 
 def __get_data_with_filter_query(cls=None, filter=None):
     if isinstance(filter, types.DictType):
@@ -35,7 +55,7 @@ def __get_data_with_filter_query(cls=None, filter=None):
 
 
 def __getSpecDataTypeItem(name, description='', createNew=True):
-    return __get_data_with_filter(cls=DataTypes, filter_dict={'name': name},
+    return __get_data_with_filter(cls=DataTypes, filter={'name': name},
                                   update_dict={'name': name, 'description': description}, createNew=createNew)
 
 
@@ -228,9 +248,8 @@ def api_getSpecDataTypeItem(name, description='', createNew=False):
     return __getSpecDataTypeItem(name, description, createNew=createNew)
 
 
-def api_get_common_data(cls=None, filter_dict={}, update_dict={}, createNew=True):
-    return __get_data_with_filter(cls, filter_dict, update_dict, createNew)
-
+def api_get_common_data_list(cls=None, filter=None, update_dict={}, createNew=True):
+    return __get_data_with_filter_list(cls, filter, update_dict, createNew)
 
 def api_get_data_with_filter_query(cls=None, filter=None):
     return __get_data_with_filter_query(cls, filter)
