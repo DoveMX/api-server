@@ -26,6 +26,8 @@ def __installVer_1_0_0(api):
     :return:
     """
 
+    pr = constUriPrefix + '/v1.0.0'
+
     class TestUnicode(Resource):
         def get(self):
             return {
@@ -80,8 +82,8 @@ def __installVer_1_0_0(api):
                     'data': data_list,
                     'count': len(data_list),
                     'paginate': {
-                        'prev_num': paginate.prev_num if paginate.prev_num else 0,  # 上一页页码数
-                        'next_num': paginate.next_num if paginate.prev_num else 0,  # 下一页页码数
+                        'prev_num': paginate.prev_num if paginate.prev_num is not None else 0,  # 上一页页码数
+                        'next_num': paginate.next_num if paginate.next_num is not None else 0,  # 下一页页码数
                         'pages': paginate.pages,  # 总页数
                         'page': paginate.page,  # 当前页的页码(从1开始)
                         'per_page': paginate.per_page,  # 每页显示的数量
@@ -109,8 +111,8 @@ def __installVer_1_0_0(api):
 
             if paginate_args.page and paginate_args.per_page:
                 return self.common_curd_get(where, {'page': paginate_args.page,
-                                                         'per_page': paginate_args.per_page,
-                                                         'error_out': False})
+                                                    'per_page': paginate_args.per_page,
+                                                    'error_out': False})
             else:
                 return self.common_curd_get(where)
 
@@ -173,7 +175,9 @@ def __installVer_1_0_0(api):
                     where = args.where.split(',')
             return where
 
-    class GetDataType(BaseCURD, Resource):
+    class APIDataType(BaseCURD, Resource):
+        """Table--DataType 原生处理操作"""
+
         def __init__(self):
             super(self.__class__, self).__init__(DataTypes)
 
@@ -183,12 +187,113 @@ def __installVer_1_0_0(api):
         def post(self):
             return self.common_curd_post()
 
-    class GetDataTypeByName(BaseCURD, Resource):
-        def __init__(self):
-            super(self.__class__, self).__init__(DataTypes)
+    class APICategories(BaseCURD, Resource):
+        """Table--Categories 原生处理操作"""
 
-        def get(self, typename):
-            return self.common_curd_get({'name': typename})
+        def __init__(self):
+            super(self.__class__, self).__init__(Categories)
+
+        def get(self):
+            return self.common_curd_get_ex()
+
+        def post(self):
+            return self.common_curd_post()
+
+    class APITags(BaseCURD, Resource):
+        """Table--Tags 原生处理操作"""
+
+        def __init__(self):
+            super(self.__class__, self).__init__(Tags)
+
+        def get(self):
+            return self.common_curd_get_ex()
+
+        def post(self):
+            return self.common_curd_post()
+
+    class APIItem(BaseCURD, Resource):
+        """Table--Item 原生处理操作"""
+
+        def __init__(self):
+            super(self.__class__, self).__init__(Item)
+
+        def get(self):
+            return self.common_curd_get_ex()
+
+        def post(self):
+            return self.common_curd_post()
+
+    class APISet(BaseCURD, Resource):
+        """Table--Set 原生处理操作"""
+
+        def __init__(self):
+            super(self.__class__, self).__init__(Set)
+
+        def get(self):
+            return self.common_curd_get_ex()
+
+        def post(self):
+            return self.common_curd_post()
+
+    """
+    ############################################################
+    """
+
+    api.add_resource(TestUnicode, pr + '/testunicode')
+
+    # types
+    """
+    **[GET]
+    1. 无分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":{\"name\":\"test\"}}" -X GET -v
+    1.1 单个过滤条件
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1\"}" -X GET -v
+    1.2 多个过滤条件
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1, id > 4\"}" -X GET -v
+    2. 有分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"page\":1, \"per_page\":20, \"where\":{\"name\":\"test\"}}" -X GET -v
+
+    **[POST]
+    1. create
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"where\":{\"name\":\"test\"},\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
+    2. update
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"where\":\"id = 9\",\"data\":{\"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
+    3. delete
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"where\":{\"id\":9}}" -X POST -v
+    """
+    api.add_resource(APIDataType, pr + '/data_type')
+
+    # categories
+    """
+    **[GET]
+    1. 无分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":{\"name\":\"animal\", \"type_id\":2}}" -X GET -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":{\"type_id\":2}}" -X GET -v
+    1.1 单个过滤条件
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":\"id > 5\"}" -X GET -v
+    1.2 多个过滤条件
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":\"id > 1, type_id = 2\"}" -X GET -v
+    2. 有分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"page\":1, \"per_page\":3, \"where\":{\"type_id\":2}}" -X GET -v
+
+    **[POST]
+    参照data_type
+    """
+    api.add_resource(APICategories, pr + '/data_categories')
+
+    # tags
+    api.add_resource(APITags, pr + '/data_tags')
+
+    # item
+    api.add_resource(APIItem, pr + '/data_items')
+
+    # set
+    api.add_resource(APISet, pr + '/data_sets')
+
+    ############################################
+    """
+    ############################################################
+    """
 
     def commonGetCategories(dataTypeName=''):
         type_item_category = api_getSpecDataTypeItem(name=dataTypeName)
@@ -368,29 +473,26 @@ def __installVer_1_0_0(api):
             super(self.__class__, self).__init__(Item)
 
         def get(self, item_id=None):
-            """
-            获取ResItems的处理
-            （1）通过参数where获取数据，支持分页配置。where参数，可以为list，也可以为dict
-
-            >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items/11 -d "{\"page\":1, \"per_page\":2}" -X POST -v
-
-
-            :param item_id:
-            :return:
-            """
             if item_id:
                 return self.common_curd_get({'id': item_id})
             else:
-                args = self.get_curd_parse.parse_args()
-                paginate_args = self.paginate_parse.parse_args()
+                where = {}
+                paginate = {
+                    'page': 1,
+                    'per_page': 25
+                }
+                try:
+                    args = self.get_curd_parse.parse_args()
+                    where = args.where if args.where else {}
 
-                if paginate_args.page and paginate_args.per_page:
-                    return self.common_curd_get(args.where, {'page': paginate_args.page,
-                                                             'per_page': paginate_args.per_page,
-                                                             'error_out': False})
-                else:
-                    return self.common_curd_get(args.where)
+                    paginate_args = self.paginate_parse.parse_args()
+                    paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
+                    paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
 
+                except:
+                    return self.common_curd_get(where, {'page': paginate['page'],
+                                                        'per_page': paginate['per_page'],
+                                                        'error_out': False})
 
         def post(self, item_id=None):
             return self.common_curd_post()
@@ -618,44 +720,48 @@ def __installVer_1_0_0(api):
             return self.common_post(Set.common_sort_users_by_set_id(set_id, props='share_users'))
 
     """
-    以下是API路由配置
+    ############################################################
     """
-    pr = constUriPrefix + '/v1.0.0'
-
-    api.add_resource(TestUnicode, pr + '/testunicode')
-
-    # 基础性API获取数据接口
+    # 获得Item所有的分类信息，不包括分类下的标签信息
     """
     ===GET
-    1. 无分页处理
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":{\"name\":\"test\"}}" -X GET -v
-    1.1 单个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1\"}" -X GET -v
-    1.2 多个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1, id > 4\"}" -X GET -v
-    2. 有分页处理
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"page\":1, \"per_page\":20, \"where\":{\"name\":\"test\"}}" -X GET -v
-    ===POST
-    1. create
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"where\":{\"name\":\"test\"},\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
-    2. update
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"where\":\"id = 9\",\"data\":{\"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
-    3. delete
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"where\":{\"id\":9}}" -X POST -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/get_all_categories_for_item -X GET -v    
     """
-    api.add_resource(GetDataType, pr + '/data_type')
+    api.add_resource(GetAllCategoriesForItem, pr + '/get_all_categories_for_item')
 
-    api.add_resource(GetDataTypeByName, pr + '/data_type/<string:typename>')
+    # 获得Set所有的分类信息，不包括分类下的标签信息
+    """
+    ===GET
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/get_all_categories_for_set -X GET -v 
+    """
+    api.add_resource(GetAllCategoriesForSet, pr + '/get_all_categories_for_set')
 
-    api.add_resource(GetAllCategoriesForItem, pr + '/getAllCategoriesForItem')
-    api.add_resource(GetAllCategoriesForSet, pr + '/getAllCategoriesForSet')
-    api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/getAllCategoriesAndTagsForItem')
-    api.add_resource(GetAllCategoriesAndTagsForSet, pr + '/getAllCategoriesAndTagsForSet')
+    # 获得Item所有的分类信息，包括分类下的标签信息
+    """
+    ===GET
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/get_all_categories_tags_for_item -X GET -v 
+    """
+    api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/get_all_categories_tags_for_item')
+
+    # 获得Item所有的分类信息，包括分类下的标签信息
+    """
+    ===GET
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/get_all_categories_tags_for_set -X GET -v
+    """
+    api.add_resource(GetAllCategoriesAndTagsForSet, pr + '/get_all_categories_tags_for_set')
 
     # User
 
     # Items
-    api.add_resource(ResItems, pr + '/items', '/items/<int:item_id>', endpoint='items')
+    """
+    ===Get
+    1.非分页方式
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items -X GET -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items/11 -X GET -v
+    2.分页方式
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items/11 -d "{\"page\":1, \"per_page\":2}" -X GET -v
+    """
+    api.add_resource(ResItems, pr + '/items', pr + '/items/<int:item_id>', endpoint='items')
 
     api.add_resource(ResItemsByTagId, pr + '/items_by_tag_id/<int:tag_id>', endpoint='items_by_tag')
     api.add_resource(ResItemsByCategoryId, pr + '/items_by_category_id/<int:category_id>', endpoint='items_by_category')

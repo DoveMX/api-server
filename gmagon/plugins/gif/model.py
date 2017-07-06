@@ -52,6 +52,22 @@ class Categories(db.Model):
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'categories.id'), nullable=True)
 
+    @staticmethod
+    def calc_count(query):
+        info = {
+            'count': query.count(),
+            'download': 0,
+            'preview': 0,
+            'collection': 0,
+            'share': 0
+        }
+        for item in query:
+            info['download'] += item.download_users.count()
+            info['preview'] += item.preview_users.count()
+            info['collection'] += item.collection_users.count()
+            info['share'] += item.share_users.count()
+        return info
+
     def getJSON(self):
         return {
             'id': self.id,
@@ -61,7 +77,9 @@ class Categories(db.Model):
             'type_id': self.type_id,
             'type_name': self.type.name,
             'parent_id': self.parent_id if self.parent_id else '',
-            'parent_name': self.parent.name if self.parent else ''
+            'parent_name': self.parent.name if self.parent else '',
+            'items': self.__class__.calc_count(self.items),
+            'sets': self.__class__.calc_count(self.sets)
         }
 
 
@@ -79,6 +97,22 @@ class Tags(db.Model):
     category_id = db.Column(db.ForeignKey(constTablePrefix + 'categories.id'))
     type_id = db.Column(db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
 
+    @staticmethod
+    def calc_count(query):
+        info = {
+            'count': query.count(),
+            'download': 0,
+            'preview': 0,
+            'collection': 0,
+            'share': 0
+        }
+        for item in query:
+            info['download'] += item.download_users.count()
+            info['preview'] += item.preview_users.count()
+            info['collection'] += item.collection_users.count()
+            info['share'] += item.share_users.count()
+        return info
+
     def getJSON(self):
         return {
             'id': self.id,
@@ -88,7 +122,9 @@ class Tags(db.Model):
             'category_id': self.category_id,
             'category_name': self.category.name,
             'type_id': self.type_id,
-            'type_name': self.type.name
+            'type_name': self.type.name,
+            'items': self.__class__.calc_count(self.items),
+            'sets': self.__class__.calc_count(self.sets)
         }
 
 
