@@ -49,11 +49,14 @@ def __installVer_1_0_0(api):
             self.post_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
                                               location='json')
             self.post_curd_parse.add_argument('data', type=dict, help='No data provided', location='json')
-            self.post_curd_parse.add_argument('deep', type=bool, help='No data provided', location='json')
+
 
             self.get_curd_parse = reqparse.RequestParser()
             self.get_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
                                              location='json')
+
+            self.get_deep_parse = reqparse.RequestParser()
+            self.get_deep_parse.add_argument('deep', type=bool, help='No data provided', location='json')
 
             self.paginate_parse = reqparse.RequestParser()
             self.paginate_parse.add_argument('page', type=int, help='No page provided',
@@ -147,7 +150,9 @@ def __installVer_1_0_0(api):
                 args = self.get_curd_parse.parse_args()
                 where = self.__where(args)
                 where = where if where else in_where
-                deep = args.deep
+
+                deep_args = self.get_deep_parse.parse_args()
+                deep = deep_args.deep
 
                 if usePaginate:
                     paginate_args = self.paginate_parse.parse_args()
@@ -188,19 +193,27 @@ def __installVer_1_0_0(api):
                 'page': 1,
                 'per_page': 25
             }
+
+            deep = False
             try:
+                deep_args = self.get_deep_parse.parse_args()
+                deep = deep_args.deep
+
                 if usePaginate:
                     paginate_args = self.paginate_parse.parse_args()
                     paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
                     paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
 
+                return self.common_curd_query(query, {'page': paginate['page'],
+                                                      'per_page': paginate['per_page'],
+                                                      'error_out': False}, deep=deep)
             except:
                 if usePaginate:
                     return self.common_curd_query(query, {'page': paginate['page'],
                                                           'per_page': paginate['per_page'],
-                                                          'error_out': False})
+                                                          'error_out': False}, deep=deep)
                 else:
-                    return self.common_curd_query(query)
+                    return self.common_curd_query(query, deep=deep)
 
         def common_curd_post(self):
             args = self.post_curd_parse.parse_args()
@@ -658,6 +671,7 @@ def __installVer_1_0_0(api):
     """
     ===GET
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -X GET -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -d "{\"deep\":1}" -X GET -v
     """
     api.add_resource(ResSetItemsOrderBySetId, pr + '/sets_items_order/<int:set_id>', endpoint='sets_items_order')
 
