@@ -49,6 +49,7 @@ def __installVer_1_0_0(api):
             self.post_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
                                               location='json')
             self.post_curd_parse.add_argument('data', type=dict, help='No data provided', location='json')
+            self.post_curd_parse.add_argument('deep', type=bool, help='No data provided', location='json')
 
             self.get_curd_parse = reqparse.RequestParser()
             self.get_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
@@ -61,7 +62,22 @@ def __installVer_1_0_0(api):
 
             self.cls = cls
 
-        def common_curd_get(self, where=None, paginateDic=None, model_cls=None):
+        def _get_obj_json(self, ele, deep=False):
+            """
+            获取有效的JSON对象
+            :param ele:
+            :param deep:
+            :return:
+            """
+            json_obj = None
+            if deep:
+                json_obj = ele.getJSONEx()
+            else:
+                json_obj = ele.getJSON()
+
+            return json_obj
+
+        def common_curd_get(self, where=None, paginateDic=None, model_cls=None, deep=False):
             """
             普通处理函数方式
             :param where:
@@ -72,49 +88,51 @@ def __installVer_1_0_0(api):
             data_list = []
             if paginateDic is not None:
                 paginate = api_get_data_with_filter_query(cls=model_cls, filter=where).paginate(**paginateDic)
-                item_list = paginate.items
-
-                if len(item_list) > 0:
-                    for item in item_list:
-                        if isinstance(item, db.Model):
-                            ele_item = item.getJSON()
-                            data_list.append(ele_item)
-                        else:
-                            ele_item = {}
-                            for i_field in range(len(item)):
-                                field_ele_obj = item[i_field]
-                                field_name = item._fields[i_field]
-                                if isinstance(field_ele_obj, db.Model):
-                                    ele_item[field_name] = field_ele_obj.getJSON()
-                                else:
-                                    ele_item[field_name] = field_ele_obj
-                            data_list.append(ele_item)
-
-                return {
-                    'status': 'success',
-                    'data': data_list,
-                    'count': len(data_list),
-                    'paginate': {
-                        'prev_num': paginate.prev_num if paginate.prev_num is not None else 0,  # 上一页页码数
-                        'next_num': paginate.next_num if paginate.next_num is not None else 0,  # 下一页页码数
-                        'pages': paginate.pages,  # 总页数
-                        'page': paginate.page,  # 当前页的页码(从1开始)
-                        'per_page': paginate.per_page,  # 每页显示的数量
-                        'total': paginate.total  # 查询返回的记录总数
-                    }
-                }
+                return self._process_data_paginate(data_list, deep, paginate)
             else:
                 data_list = api_get_data_with_filter_query(cls=model_cls, filter=where).all()
                 list = []
                 if len(data_list) > 0:
                     for ele in data_list:
-                        list.append(ele.getJSON())
+                        ele_item = self._get_obj_json(ele, deep)
+                        list.append(ele_item)
 
                 return {
                     'status': 'success',
                     'data': list,
                     'count': len(list)
                 }
+
+        def _process_data_paginate(self, data_list, deep, paginate):
+            item_list = paginate.items
+            if len(item_list) > 0:
+                for item in item_list:
+                    if isinstance(item, db.Model):
+                        ele_item = self._get_obj_json(item, deep)
+                        data_list.append(ele_item)
+                    else:
+                        ele_item = {}
+                        for i_field in range(len(item)):
+                            field_ele_obj = item[i_field]
+                            field_name = item._fields[i_field]
+                            if isinstance(field_ele_obj, db.Model):
+                                ele_item[field_name] = self._get_obj_json(field_ele_obj, deep)
+                            else:
+                                ele_item[field_name] = field_ele_obj
+                        data_list.append(ele_item)
+            return {
+                'status': 'success',
+                'data': data_list,
+                'count': len(data_list),
+                'paginate': {
+                    'prev_num': paginate.prev_num if paginate.prev_num is not None else 0,  # 上一页页码数
+                    'next_num': paginate.next_num if paginate.next_num is not None else 0,  # 下一页页码数
+                    'pages': paginate.pages,  # 总页数
+                    'page': paginate.page,  # 当前页的页码(从1开始)
+                    'per_page': paginate.per_page,  # 每页显示的数量
+                    'total': paginate.total  # 查询返回的记录总数
+                }
+            }
 
         def common_curd_get_ex(self, in_where=None, usePaginate=True):
             """派生方法，自动处理where及分页"""
@@ -123,10 +141,13 @@ def __installVer_1_0_0(api):
                 'page': 1,
                 'per_page': 25
             }
+            deep = False
+
             try:
                 args = self.get_curd_parse.parse_args()
                 where = self.__where(args)
                 where = where if where else in_where
+                deep = args.deep
 
                 if usePaginate:
                     paginate_args = self.paginate_parse.parse_args()
@@ -137,52 +158,23 @@ def __installVer_1_0_0(api):
                 if usePaginate:
                     return self.common_curd_get(where, {'page': paginate['page'],
                                                         'per_page': paginate['per_page'],
-                                                        'error_out': False})
+                                                        'error_out': False}, deep=deep)
                 else:
-                    return self.common_curd_get(where)
+                    return self.common_curd_get(where, deep=deep)
 
-        def common_curd_query(self, query, paginateDic=None):
+        def common_curd_query(self, query, paginateDic=None, deep=False):
             """通用方式查询"""
             data_list = []
             if paginateDic is not None:
                 paginate = query.paginate(**paginateDic)
-                item_list = paginate.items
-
-                if len(item_list) > 0:
-                    for item in item_list:
-                        if isinstance(item, db.Model):
-                            ele_item = item.getJSON()
-                            data_list.append(ele_item)
-                        else:
-                            ele_item = {}
-                            for i_field in range(len(item)):
-                                field_ele_obj = item[i_field]
-                                field_name = item._fields[i_field]
-                                if isinstance(field_ele_obj, db.Model):
-                                    ele_item[field_name] = field_ele_obj.getJSON()
-                                else:
-                                    ele_item[field_name] = field_ele_obj
-                            data_list.append(ele_item)
-
-                return {
-                    'status': 'success',
-                    'data': data_list,
-                    'count': len(data_list),
-                    'paginate': {
-                        'prev_num': paginate.prev_num if paginate.prev_num is not None else 0,  # 上一页页码数
-                        'next_num': paginate.next_num if paginate.next_num is not None else 0,  # 下一页页码数
-                        'pages': paginate.pages,  # 总页数
-                        'page': paginate.page,  # 当前页的页码(从1开始)
-                        'per_page': paginate.per_page,  # 每页显示的数量
-                        'total': paginate.total  # 查询返回的记录总数
-                    }
-                }
+                return self._process_data_paginate(data_list, deep, paginate)
             else:
                 data_list = query.all()
                 list = []
                 if len(data_list) > 0:
                     for ele in data_list:
-                        list.append(ele.getJSON())
+                        ele_item = self._get_obj_json(ele, deep)
+                        list.append(ele_item)
 
                 return {
                     'status': 'success',
@@ -205,8 +197,8 @@ def __installVer_1_0_0(api):
             except:
                 if usePaginate:
                     return self.common_curd_query(query, {'page': paginate['page'],
-                                                        'per_page': paginate['per_page'],
-                                                        'error_out': False})
+                                                          'per_page': paginate['per_page'],
+                                                          'error_out': False})
                 else:
                     return self.common_curd_query(query)
 
@@ -401,7 +393,6 @@ def __installVer_1_0_0(api):
         def get(self):
             return commonGetAllCategoriesAndTags('SetCategory', 'SetTag')
 
-
     """
     Item相关的API资源声明
     """
@@ -418,11 +409,11 @@ def __installVer_1_0_0(api):
             else:
                 return self.common_curd_get_ex()
 
-
     class ResItemsByTagId(BaseCURD, Resource):
         """
         获取所有的Item数据通过Tag
         """
+
         def __init__(self):
             super(self.__class__, self).__init__(Item)
 
@@ -435,7 +426,6 @@ def __installVer_1_0_0(api):
                     return _get_err_info('not found ele')
             else:
                 return self.common_curd_get_ex()
-
 
     class ResItemsByCategoryId(BaseCURD, Resource):
         """
@@ -454,7 +444,6 @@ def __installVer_1_0_0(api):
                     return _get_err_info('category_id is null')
             else:
                 return self.common_curd_get_ex()
-
 
     """
     Set相关的API资源声明
@@ -478,6 +467,7 @@ def __installVer_1_0_0(api):
         """
         获取所有资源包
         """
+
         def __init__(self):
             super(self.__class__, self).__init__(Set)
 
@@ -518,7 +508,6 @@ def __installVer_1_0_0(api):
                     return _get_err_info('not found ele')
             else:
                 return _get_err_info('set_id is null')
-
 
     class ResSetItemsOrderBySetId(BaseCURD, Resource):
         def __init__(self):
@@ -652,6 +641,14 @@ def __installVer_1_0_0(api):
 
     ########################################
     # Sets
+    """
+    ===Get
+    1.非分页方式
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets -X GET -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets/1 -X GET -v
+    2.分页方式
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets/1 -d "{\"page\":1, \"per_page\":2}" -X GET -v
+    """
     api.add_resource(ResSets, pr + '/sets', '/sets/<int:set_id>', endpoint='sets')
     api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
     api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')

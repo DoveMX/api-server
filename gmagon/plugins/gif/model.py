@@ -13,6 +13,32 @@ from sqlalchemy.orm import aliased
 from api.gmagon.database import db
 from api.gmagon.plugins.gif.util import constTablePrefix, format_datetime
 
+class _Utils:
+    @staticmethod
+    def calc_user_op_statistics_count(query):
+        """统计与用户相关的常用操作数量"""
+        info = {
+            'count': query.count(),
+            'download': 0,
+            'preview': 0,
+            'collection': 0,
+            'share': 0
+        }
+        for item in query:
+            info['download'] += item.download_users.count()
+            info['preview'] += item.preview_users.count()
+            info['collection'] += item.collection_users.count()
+            info['share'] += item.share_users.count()
+
+        return info
+
+    @staticmethod
+    def calc_list(query):
+        data_list = []
+        for ele in query:
+            if hasattr(ele, 'getBaseJSON'):
+                data_list.append(ele.getBaseJSON())
+        return data_list
 
 class DataTypes(db.Model):
     """
@@ -27,12 +53,20 @@ class DataTypes(db.Model):
     name = db.Column(db.String(255), nullable=False, doc='数据类型的名称', unique=True)
     description = db.Column(db.String(400), nullable=False, default='', doc='数据类型的描述')
 
-    def getJSON(self):
+    def getBaseJSON(self):
         return {
             'id': self.id,
             'name': self.name,
             'description': self.description
         }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
 
     def __repr__(self):
         return "DataTypes(%d, %s, %s)" % (self.id, self.name, self.description)
@@ -52,23 +86,7 @@ class Categories(db.Model):
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'categories.id'), nullable=True)
 
-    @staticmethod
-    def calc_count(query):
-        info = {
-            'count': query.count(),
-            'download': 0,
-            'preview': 0,
-            'collection': 0,
-            'share': 0
-        }
-        for item in query:
-            info['download'] += item.download_users.count()
-            info['preview'] += item.preview_users.count()
-            info['collection'] += item.collection_users.count()
-            info['share'] += item.share_users.count()
-        return info
-
-    def getJSON(self):
+    def getBaseJSON(self):
         return {
             'id': self.id,
             'name': self.name,
@@ -77,10 +95,30 @@ class Categories(db.Model):
             'type_id': self.type_id,
             'type_name': self.type.name,
             'parent_id': self.parent_id if self.parent_id else '',
-            'parent_name': self.parent.name if self.parent else '',
-            'items': self.__class__.calc_count(self.items),
-            'sets': self.__class__.calc_count(self.sets)
+            'parent_name': self.parent.name if self.parent else ''
         }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        info.update({
+            'items_count': self.items.count(),
+            'sets_count': self.sets.count(),
+            'tags_count': self.tags.count(),
+            'children_count': self.children.count()
+        })
+        return info
+
+    def getJSONEx(self):
+        info = self.getJSON()
+        info.update({
+            'children': _Utils.calc_list(self.children),
+            'tags': _Utils.calc_list(self.tags),
+            'items': _Utils.calc_list(self.items),
+            'sets': _Utils.calc_list(self.sets),
+            'items_statistics': _Utils.calc_user_op_statistics_count(self.items),
+            'sets_statistics': _Utils.calc_user_op_statistics_count(self.sets),
+        })
+        return info
 
 
 class Tags(db.Model):
@@ -97,23 +135,9 @@ class Tags(db.Model):
     category_id = db.Column(db.ForeignKey(constTablePrefix + 'categories.id'))
     type_id = db.Column(db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
 
-    @staticmethod
-    def calc_count(query):
-        info = {
-            'count': query.count(),
-            'download': 0,
-            'preview': 0,
-            'collection': 0,
-            'share': 0
-        }
-        for item in query:
-            info['download'] += item.download_users.count()
-            info['preview'] += item.preview_users.count()
-            info['collection'] += item.collection_users.count()
-            info['share'] += item.share_users.count()
-        return info
 
-    def getJSON(self):
+
+    def getBaseJSON(self):
         return {
             'id': self.id,
             'name': self.name,
@@ -123,9 +147,26 @@ class Tags(db.Model):
             'category_name': self.category.name,
             'type_id': self.type_id,
             'type_name': self.type.name,
-            'items': self.__class__.calc_count(self.items),
-            'sets': self.__class__.calc_count(self.sets)
         }
+
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        info.update({
+            'items_count': self.items.count(),
+            'sets_count': self.sets.count(),
+        })
+        return info
+
+    def gertJSONEx(self):
+        info = self.getJSON()
+        info.update({
+            'items': _Utils.calc_list(self.items),
+            'sets': _Utils.calc_list(self.sets),
+            'items_statistics': _Utils.calc_user_op_statistics_count(self.items),
+            'sets_statistics': _Utils.calc_user_op_statistics_count(self.sets),
+        })
+        return info
 
 
 # 用户部分
@@ -329,26 +370,7 @@ class Item(db.Model):
     share_users = db.relationship('User', secondary=tbl_item_trace_shares,
                                   backref=db.backref('share_items', lazy='dynamic'), lazy='dynamic')
 
-    def getJSON(self):
-        """
-        获取可JSON化的数据
-        :return:
-        """
-        tags_data_list = []
-        for tagObj in self.tags:
-            ele_tag = tagObj.getJSON()
-            tags_data_list.append(ele_tag)
-
-        categories_data_list = []
-        for categoryObj in self.categories:
-            ele_category = categoryObj.getJSON()
-            categories_data_list.append(ele_category)
-
-        download_quantity = self.download_users.count()  # '被下载的次数'
-        preview_quantity = self.preview_users.count()  # '被浏览的次数'
-        collection_quantity = self.collection_users.count()  # '被收藏的次数'
-        share_quantity = self.share_users.count()  # 被分享的次数'
-
+    def getBaseJSON(self):
         return {
             'id': self.id,
             'name': self.name,
@@ -362,14 +384,38 @@ class Item(db.Model):
             'is_shield': self.is_shield,
             'is_removed': self.is_removed,
 
-            'download_quantity': download_quantity,
-            'preview_quantity': preview_quantity,
-            'collection_quantity': collection_quantity,
-            'share_quantity': share_quantity,
-
-            'tags': tags_data_list,
-            'categories': categories_data_list
+            'download_quantity': self.download_users.count(),
+            'preview_quantity': self.preview_users.count(),
+            'collection_quantity': self.collection_users.count(),
+            'share_quantity': self.share_users.count()
         }
+
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        info.update({
+            'tags_count': self.tags.count(),
+            'categories_count': self.categories.count(),
+            'sets_count': self.sets.count(),
+        })
+        return info
+
+
+    def getJSONEx(self):
+        """
+        获取可JSON化的数据
+        :return:
+        """
+
+        info = self.getJSON()
+        info.update({
+            'tags': _Utils.calc_list(self.tags),
+            'categories': _Utils.calc_list(self.categories),
+            'sets': _Utils.calc_list(self.sets),
+        })
+        return info
+
+
 
     @staticmethod
     def sort_items_by_tag_id(tag_id):
@@ -511,31 +557,9 @@ class Set(db.Model):
     share_users = db.relationship('User', secondary=tbl_set_trace_shares,
                                   backref=db.backref('share_sets', lazy='dynamic'), lazy='dynamic')
 
-    def getJSON(self):
-        """
-        获取可JSON化的数据
-        :return:
-        """
-        tags_data_list = []
-        for tagObj in self.tags:
-            ele_tag = tagObj.getJSON()
-            tags_data_list.append(ele_tag)
 
-        categories_data_list = []
-        for categoryObj in self.categories:
-            ele_category = categoryObj.getJSON()
-            categories_data_list.append(ele_category)
 
-        item_data_list = []
-        for item in self.items:
-            ele = item.getJSON()
-            item_data_list.append(ele)
-
-        download_quantity = self.download_users.count()  # '被下载的次数'
-        preview_quantity = self.preview_users.count()  # '被浏览的次数'
-        collection_quantity = self.collection_users.count()  # '被收藏的次数'
-        share_quantity = self.share_users.count()  # 被分享的次数'
-
+    def getBaseJSON(self):
         return {
             'id': self.id,
             'name': self.name,
@@ -549,16 +573,35 @@ class Set(db.Model):
             'is_shield': self.is_shield,
             'is_removed': self.is_removed,
 
-            'download_quantity': download_quantity,
-            'preview_quantity': preview_quantity,
-            'collection_quantity': collection_quantity,
-            'share_quantity': share_quantity,
-
-            'tags': tags_data_list,
-            'categories': categories_data_list,
-            'items': item_data_list
-
+            'download_quantity': self.download_users.count(),
+            'preview_quantity': self.preview_users.count(),
+            'collection_quantity': self.collection_users.count(),
+            'share_quantity': self.share_users.count()
         }
+
+    def getJSON(self):
+        """
+        获取可JSON化的数据
+        :return:
+        """
+        info = self.getBaseJSON()
+        info.update({
+            'tags_count':self.tags.count(),
+            'categories_count': self.categories.count(),
+            'items_count': self.items.count(),
+        })
+        return info
+
+
+    def getJSONEx(self):
+        info = self.getJSON()
+        info.update({
+            'tags': _Utils.calc_list(self.tags),
+            'categories': _Utils.calc_list(self.categories),
+            'items': _Utils.calc_list(self.items),
+        })
+        return info
+
 
 
     @staticmethod
