@@ -560,24 +560,11 @@ class Set(db.Model):
 
         }
 
-    @staticmethod
-    def sort_sets_by_tag_id(tag_id):
-        cur_tag = Tags.query.filter_by(id=tag_id)
-        return cur_tag.sets
-        # return Set.query.join(tbl_set_tags,
-        #                        (tbl_set_tags.c.tag_id == tag_id)).filter(tbl_set_tags.c.set_id == Set.id)\
-        #     .order_by(Set.id.desc()).filter()
 
     @staticmethod
-    def sort_sets_by_category_id(category_id):
-        return Set.query.join(tbl_set_categories,
-                              (tbl_set_categories.c.category_id == category_id)).filter(
-            tbl_set_categories.c.set_id == Set.id) \
-            .order_by(Set.id.desc()).filter()
-
-    @staticmethod
-    def sort_items_by_set_id(set_id):
+    def get_items_order_by_set_id(_set_id=None):
         use_orm = False
+        set_id = _set_id
         if use_orm:
             cur_set = Set.query.filter_by(id=set_id).first()
             query = None
@@ -595,15 +582,6 @@ class Set(db.Model):
                                     ).join(tbl_set_items,
                                    (tbl_set_items.c.set_id == set_id)).filter(tbl_set_items.c.item_id == Item.id) \
                 .order_by(tbl_set_items.c.order.asc()).filter()
-
-
-    @staticmethod
-    def common_sort_users_by_set_id(set_id, props='download_users'):
-        cur_set = Set.query.filter_by(id=set_id).first()
-        query = None
-        if cur_set:
-            query = cur_set.__getattribute__(props)
-        return query
 
 
 ### 评论部分
