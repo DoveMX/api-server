@@ -11,7 +11,8 @@ from sqlalchemy.orm import aliased
 
 # project
 from api.gmagon.database import db
-from api.gmagon.plugins.gif.util import constTablePrefix, format_datetime
+from api.gmagon.common.util import format_datetime
+from api.gmagon.plugins.gif.util import constTablePrefix
 
 class _Utils:
     @staticmethod
@@ -466,6 +467,8 @@ tbl_set_items = db.Table(constTablePrefix + 'set_items',
                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                    primary_key=True),
                          db.Column('order', db.Integer, nullable=False, default=0, doc='排序'),
+                         db.Column('note', db.String(4000), nullable=True, default='', doc='针对该Item在Set中的介绍，有别于Item自己的描述'),
+
                          db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
                          db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
                                    doc='数据项是否处于版权保护'),

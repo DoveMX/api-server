@@ -10,8 +10,10 @@ from flask_restful import Resource, reqparse
 from sqlalchemy import util
 
 from api.gmagon.database import db
+from api.gmagon.common.model import GUser, GUserMachines
 from api.gmagon.plugins.gif.util import constUriPrefix
-from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags, Item, Set
+from api.gmagon.plugins.gif.model import \
+    DataTypes, Categories, Tags, Item, Set, User, UserTrace, UserPush, UserAnalysisAUTO
 from api.gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_getSpecCategroyItem, \
     api_getSpecDataTypeItemById, \
     api_get_common_data_list, \
@@ -19,7 +21,293 @@ from api.gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd,
     api_getSpecDataTypeItem, api_getSpecTagItem
 
 
-def __installVer_1_0_0(api):
+def _get_err_info(err=''):
+    return {
+        'status': 'err',
+        'err': err
+    }
+
+class BaseCURD:
+    def __init__(self, cls=None):
+        self.post_curd_parse = reqparse.RequestParser()
+        self.post_curd_parse.add_argument('op', type=str, required=True, help='No op provided',
+                                          location='json')  # 操作方式
+        self.post_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
+                                          location='json')
+        self.post_curd_parse.add_argument('data', type=dict, help='No data provided', location='json')
+
+
+        self.get_curd_parse = reqparse.RequestParser()
+        self.get_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
+                                         location='json')
+
+        self.get_deep_parse = reqparse.RequestParser()
+        self.get_deep_parse.add_argument('deep', type=bool, help='No data provided', location='json')
+
+        self.paginate_parse = reqparse.RequestParser()
+        self.paginate_parse.add_argument('page', type=int, help='No page provided',
+                                         location='json')
+        self.paginate_parse.add_argument('per_page', type=int, location='json')
+
+        self.cls = cls
+
+    def _get_obj_json(self, ele, deep=False):
+        """
+        获取有效的JSON对象
+        :param ele:
+        :param deep:
+        :return:
+        """
+        json_obj = None
+        if deep:
+            json_obj = ele.getJSONEx()
+        else:
+            json_obj = ele.getJSON()
+
+        return json_obj
+
+    def common_curd_get(self, where=None, paginateDic=None, model_cls=None, deep=False):
+        """
+        普通处理函数方式
+        :param where:
+        :param paginateDic:
+        :return:
+        """
+        model_cls = model_cls if model_cls else self.cls
+        data_list = []
+        if paginateDic is not None:
+            paginate = api_get_data_with_filter_query(cls=model_cls, filter=where).paginate(**paginateDic)
+            return self._process_data_paginate(data_list, deep, paginate)
+        else:
+            data_list = api_get_data_with_filter_query(cls=model_cls, filter=where).all()
+            list = []
+            if len(data_list) > 0:
+                for ele in data_list:
+                    ele_item = self._get_obj_json(ele, deep)
+                    list.append(ele_item)
+
+            return {
+                'status': 'success',
+                'data': list,
+                'count': len(list)
+            }
+
+    def _process_data_paginate(self, data_list, deep, paginate):
+        item_list = paginate.items
+        if len(item_list) > 0:
+            for item in item_list:
+                if isinstance(item, db.Model):
+                    ele_item = self._get_obj_json(item, deep)
+                    data_list.append(ele_item)
+                else:
+                    ele_item = {}
+                    for i_field in range(len(item)):
+                        field_ele_obj = item[i_field]
+                        field_name = item._fields[i_field]
+                        if isinstance(field_ele_obj, db.Model):
+                            ele_item[field_name] = self._get_obj_json(field_ele_obj, deep)
+                        else:
+                            ele_item[field_name] = field_ele_obj
+                    data_list.append(ele_item)
+        return {
+            'status': 'success',
+            'data': data_list,
+            'count': len(data_list),
+            'paginate': {
+                'prev_num': paginate.prev_num if paginate.prev_num is not None else 0,  # 上一页页码数
+                'next_num': paginate.next_num if paginate.next_num is not None else 0,  # 下一页页码数
+                'pages': paginate.pages,  # 总页数
+                'page': paginate.page,  # 当前页的页码(从1开始)
+                'per_page': paginate.per_page,  # 每页显示的数量
+                'total': paginate.total  # 查询返回的记录总数
+            }
+        }
+
+    def common_curd_get_ex(self, in_where=None, usePaginate=True):
+        """派生方法，自动处理where及分页"""
+        where = in_where if in_where else {}
+        paginate = {
+            'page': 1,
+            'per_page': 25
+        }
+        deep = False
+
+        try:
+            args = self.get_curd_parse.parse_args()
+            where = self.__where(args)
+            where = where if where else in_where
+
+            deep_args = self.get_deep_parse.parse_args()
+            deep = deep_args.deep
+
+            if usePaginate:
+                paginate_args = self.paginate_parse.parse_args()
+                paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
+                paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
+
+        finally:
+            if usePaginate:
+                return self.common_curd_get(where, {'page': paginate['page'],
+                                                    'per_page': paginate['per_page'],
+                                                    'error_out': False}, deep=deep)
+            else:
+                return self.common_curd_get(where, deep=deep)
+
+    def common_curd_query(self, query, paginateDic=None, deep=False):
+        """通用方式查询"""
+        data_list = []
+        if paginateDic is not None:
+            paginate = query.paginate(**paginateDic)
+            return self._process_data_paginate(data_list, deep, paginate)
+        else:
+            data_list = query.all()
+            list = []
+            if len(data_list) > 0:
+                for ele in data_list:
+                    ele_item = self._get_obj_json(ele, deep)
+                    list.append(ele_item)
+
+            return {
+                'status': 'success',
+                'data': list,
+                'count': len(list)
+            }
+
+    def common_curd_query_ex(self, query, usePaginate=True):
+        """派生方法，自动处理where及分页"""
+        paginate = {
+            'page': 1,
+            'per_page': 25
+        }
+
+        deep = False
+        try:
+            deep_args = self.get_deep_parse.parse_args()
+            deep = deep_args.deep
+
+            if usePaginate:
+                paginate_args = self.paginate_parse.parse_args()
+                paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
+                paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
+        finally:
+            if usePaginate:
+                return self.common_curd_query(query, {'page': paginate['page'],
+                                                      'per_page': paginate['per_page'],
+                                                      'error_out': False}, deep=deep)
+            else:
+                return self.common_curd_query(query, deep=deep)
+
+    def common_curd_post(self):
+        args = self.post_curd_parse.parse_args()
+
+        op = args.op
+        data = args.data
+
+        where = self.__where(args)
+
+        data_item_list = None
+        if re.findall('create', op):
+            data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=True)
+            if len(data_item_list) > 0:
+                for sub_item in data_item_list:
+                    api_checkSessionAdd(sub_item)
+            api_session_commit()
+
+        elif re.findall('update', op):
+            data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=False)
+            if len(data_item_list) > 0:
+                for sub_item in data_item_list:
+                    for (k, v) in data.items():
+                        if hasattr(sub_item, k):
+                            sub_item.__setattr__(k, v)
+                    api_checkSessionAdd(sub_item)
+                api_session_commit()
+
+        elif re.findall('delete', op):
+            data_item_list = api_get_common_data_list(cls=self.cls, filter=where, createNew=False)
+            if data_item_list:
+                if len(data_item_list) > 0:
+                    for sub_item in data_item_list:
+                        db.session.delete(sub_item)
+                api_session_commit()
+
+        data_list = []
+        if len(data_item_list):
+            for ele in data_item_list:
+                data_list.append(ele.getJSON())
+
+        return {
+            'status': 'success',
+            'op': op,
+            'data': data_list,
+            'count': len(data_list)
+        }
+
+    def __where(self, args):
+        where = None
+        if args is None:
+            return where
+
+        if isinstance(args.where, types.DictType):
+            where = args.where
+        elif args.where:
+            try:
+                where = eval(args.where)
+                if not isinstance(where, types.DictType):
+                    where = args.where.split(',')
+            except:
+                where = args.where.split(',')
+        return where
+
+def __install_common_api_Ver_1_0_0(api):
+    pr = '/api/v1.0.0'
+
+    class APIGUser(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(GUser)
+
+        def get(self):
+            return self.common_curd_get_ex()
+
+        def post(self):
+            return self.common_curd_post()
+
+    class APIGUserMachines(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(GUserMachines)
+
+        def get(self):
+            return self.common_curd_get_ex()
+
+        def post(self):
+            return self.common_curd_post()
+
+    api.add_resource(APIGUser, pr + '/users')
+
+    # GUserMachines
+    """
+    **[GET]
+    1. 无分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":{\"os\":\"MacOSX\"}}" -X GET -v
+    1.1 单个过滤条件
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":\"os like 'mac'\"}" -X GET -v
+    1.2 多个过滤条件
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":\"id > 1, id > 4\"}" -X GET -v
+    2. 有分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"page\":1, \"per_page\":20, \"where\":{\"os\":\"MacOSX\"}}" -X GET -v
+
+
+    **[POST]
+    1. create
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"op\":\"create\",\"where\":{\"id\":\"NOGUserMachines\"},\"data\":{\"id\":\"NOGUserMachines\"}}" -X POST -v
+    2. update
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"op\":\"update\",\"where\":{\"id\":\"NOGUserMachines\"},\"data\":{\"os\":\"win\"}}" -X POST -v
+    3. delete
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"op\":\"delete\",\"where\":{\"id\":\"NOGUserMachines\"}}" -X POST -v
+    """
+    api.add_resource(APIGUserMachines, pr + '/machines')
+
+def __install_gif_api_Ver_1_0_0(api):
     """
     API 版本1.0.0 的接口方式定义，
     :param api:
@@ -28,11 +316,6 @@ def __installVer_1_0_0(api):
 
     pr = constUriPrefix + '/v1.0.0'
 
-    def _get_err_info(err=''):
-        return {
-            'status': 'err',
-            'err': err
-        }
 
     class TestUnicode(Resource):
         def get(self):
@@ -41,241 +324,17 @@ def __installVer_1_0_0(api):
                 'message': '中文Hello'
             }
 
-    class BaseCURD:
-        def __init__(self, cls=None):
-            self.post_curd_parse = reqparse.RequestParser()
-            self.post_curd_parse.add_argument('op', type=str, required=True, help='No op provided',
-                                              location='json')  # 操作方式
-            self.post_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
-                                              location='json')
-            self.post_curd_parse.add_argument('data', type=dict, help='No data provided', location='json')
+    class APIUsers(BaseCURD, Resource):
+        """原生处理操作"""
 
+        def __init__(self):
+            super(self.__class__, self).__init__(User)
 
-            self.get_curd_parse = reqparse.RequestParser()
-            self.get_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
-                                             location='json')
+        def get(self):
+            return self.common_curd_get_ex()
 
-            self.get_deep_parse = reqparse.RequestParser()
-            self.get_deep_parse.add_argument('deep', type=bool, help='No data provided', location='json')
-
-            self.paginate_parse = reqparse.RequestParser()
-            self.paginate_parse.add_argument('page', type=int, help='No page provided',
-                                             location='json')
-            self.paginate_parse.add_argument('per_page', type=int, location='json')
-
-            self.cls = cls
-
-        def _get_obj_json(self, ele, deep=False):
-            """
-            获取有效的JSON对象
-            :param ele:
-            :param deep:
-            :return:
-            """
-            json_obj = None
-            if deep:
-                json_obj = ele.getJSONEx()
-            else:
-                json_obj = ele.getJSON()
-
-            return json_obj
-
-        def common_curd_get(self, where=None, paginateDic=None, model_cls=None, deep=False):
-            """
-            普通处理函数方式
-            :param where:
-            :param paginateDic:
-            :return:
-            """
-            model_cls = model_cls if model_cls else self.cls
-            data_list = []
-            if paginateDic is not None:
-                paginate = api_get_data_with_filter_query(cls=model_cls, filter=where).paginate(**paginateDic)
-                return self._process_data_paginate(data_list, deep, paginate)
-            else:
-                data_list = api_get_data_with_filter_query(cls=model_cls, filter=where).all()
-                list = []
-                if len(data_list) > 0:
-                    for ele in data_list:
-                        ele_item = self._get_obj_json(ele, deep)
-                        list.append(ele_item)
-
-                return {
-                    'status': 'success',
-                    'data': list,
-                    'count': len(list)
-                }
-
-        def _process_data_paginate(self, data_list, deep, paginate):
-            item_list = paginate.items
-            if len(item_list) > 0:
-                for item in item_list:
-                    if isinstance(item, db.Model):
-                        ele_item = self._get_obj_json(item, deep)
-                        data_list.append(ele_item)
-                    else:
-                        ele_item = {}
-                        for i_field in range(len(item)):
-                            field_ele_obj = item[i_field]
-                            field_name = item._fields[i_field]
-                            if isinstance(field_ele_obj, db.Model):
-                                ele_item[field_name] = self._get_obj_json(field_ele_obj, deep)
-                            else:
-                                ele_item[field_name] = field_ele_obj
-                        data_list.append(ele_item)
-            return {
-                'status': 'success',
-                'data': data_list,
-                'count': len(data_list),
-                'paginate': {
-                    'prev_num': paginate.prev_num if paginate.prev_num is not None else 0,  # 上一页页码数
-                    'next_num': paginate.next_num if paginate.next_num is not None else 0,  # 下一页页码数
-                    'pages': paginate.pages,  # 总页数
-                    'page': paginate.page,  # 当前页的页码(从1开始)
-                    'per_page': paginate.per_page,  # 每页显示的数量
-                    'total': paginate.total  # 查询返回的记录总数
-                }
-            }
-
-        def common_curd_get_ex(self, in_where=None, usePaginate=True):
-            """派生方法，自动处理where及分页"""
-            where = in_where if in_where else {}
-            paginate = {
-                'page': 1,
-                'per_page': 25
-            }
-            deep = False
-
-            try:
-                args = self.get_curd_parse.parse_args()
-                where = self.__where(args)
-                where = where if where else in_where
-
-                deep_args = self.get_deep_parse.parse_args()
-                deep = deep_args.deep
-
-                if usePaginate:
-                    paginate_args = self.paginate_parse.parse_args()
-                    paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
-                    paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
-
-            except:
-                if usePaginate:
-                    return self.common_curd_get(where, {'page': paginate['page'],
-                                                        'per_page': paginate['per_page'],
-                                                        'error_out': False}, deep=deep)
-                else:
-                    return self.common_curd_get(where, deep=deep)
-
-        def common_curd_query(self, query, paginateDic=None, deep=False):
-            """通用方式查询"""
-            data_list = []
-            if paginateDic is not None:
-                paginate = query.paginate(**paginateDic)
-                return self._process_data_paginate(data_list, deep, paginate)
-            else:
-                data_list = query.all()
-                list = []
-                if len(data_list) > 0:
-                    for ele in data_list:
-                        ele_item = self._get_obj_json(ele, deep)
-                        list.append(ele_item)
-
-                return {
-                    'status': 'success',
-                    'data': list,
-                    'count': len(list)
-                }
-
-        def common_curd_query_ex(self, query, usePaginate=True):
-            """派生方法，自动处理where及分页"""
-            paginate = {
-                'page': 1,
-                'per_page': 25
-            }
-
-            deep = False
-            try:
-                deep_args = self.get_deep_parse.parse_args()
-                deep = deep_args.deep
-
-                if usePaginate:
-                    paginate_args = self.paginate_parse.parse_args()
-                    paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
-                    paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
-
-                return self.common_curd_query(query, {'page': paginate['page'],
-                                                      'per_page': paginate['per_page'],
-                                                      'error_out': False}, deep=deep)
-            except:
-                if usePaginate:
-                    return self.common_curd_query(query, {'page': paginate['page'],
-                                                          'per_page': paginate['per_page'],
-                                                          'error_out': False}, deep=deep)
-                else:
-                    return self.common_curd_query(query, deep=deep)
-
-        def common_curd_post(self):
-            args = self.post_curd_parse.parse_args()
-
-            op = args.op
-            data = args.data
-
-            where = self.__where(args)
-
-            data_item_list = None
-            if re.findall('create', op):
-                data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=True)
-                if len(data_item_list) > 0:
-                    for sub_item in data_item_list:
-                        api_checkSessionAdd(sub_item)
-                api_session_commit()
-
-            elif re.findall('update', op):
-                data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=False)
-                if len(data_item_list) > 0:
-                    for sub_item in data_item_list:
-                        for (k, v) in data.items():
-                            if hasattr(sub_item, k):
-                                sub_item.__setattr__(k, v)
-                        api_checkSessionAdd(sub_item)
-                    api_session_commit()
-
-            elif re.findall('delete', op):
-                data_item_list = api_get_common_data_list(cls=self.cls, filter=where, createNew=False)
-                if data_item_list:
-                    if len(data_item_list) > 0:
-                        for sub_item in data_item_list:
-                            db.session.delete(sub_item)
-                    api_session_commit()
-
-            data_list = []
-            if len(data_item_list):
-                for ele in data_item_list:
-                    data_list.append(ele.getJSON())
-
-            return {
-                'status': 'success',
-                'op': op,
-                'data': data_list,
-                'count': len(data_list)
-            }
-
-        def __where(self, args):
-            where = None
-            if args is None:
-                return where
-
-            if isinstance(args.where, types.DictType):
-                where = args.where
-            elif args.where:
-                try:
-                    where = eval(args.where)
-                    if not isinstance(where, types.DictType):
-                        where = args.where.split(',')
-                except:
-                    where = args.where.split(',')
-            return where
+        def post(self):
+            return self.common_curd_post()
 
     class APIDataType(BaseCURD, Resource):
         """Table--DataType 原生处理操作"""
@@ -405,6 +464,20 @@ def __installVer_1_0_0(api):
 
         def get(self):
             return commonGetAllCategoriesAndTags('SetCategory', 'SetTag')
+
+    """
+    User 用户部分
+    """
+    class ResUsers(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(User)
+
+        def get(self, user_id=None):
+            if user_id:
+                return self.common_curd_get({'id': user_id})
+            else:
+                return self.common_curd_get_ex()
+
 
     """
     Item相关的API资源声明
@@ -541,6 +614,11 @@ def __installVer_1_0_0(api):
     """
 
     api.add_resource(TestUnicode, pr + '/testunicode')
+
+    # users
+    """
+    """
+    api.add_resource(APIUsers, pr + '/data_user')
 
     # types
     """
@@ -686,4 +764,5 @@ def __installVer_1_0_0(api):
 
 def install(api):
     """Install for RESTFull framework"""
-    __installVer_1_0_0(api)
+    __install_common_api_Ver_1_0_0(api)
+    __install_gif_api_Ver_1_0_0(api)

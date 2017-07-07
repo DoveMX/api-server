@@ -11,6 +11,7 @@ from flask_login import UserMixin
 
 # local
 from api.gmagon.database import db
+from api.gmagon.common.util import format_datetime
 
 
 def retain():
@@ -72,6 +73,17 @@ class GUserMachines(db.Model):
     user_id = db.Column(db.ForeignKey('users.id'), nullable=True)
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'os': self.os,
+            'user_id': self.user_id if self.user_id else '',
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
 
 ## 创建关系
 GUser.machines = db.relationship('GUserMachines', backref='user', order_by=GUserMachines.id)
