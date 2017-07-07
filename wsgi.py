@@ -20,33 +20,41 @@ except Exception:
     pass
 
 # lib
-from sqlalchemy_utils import database_exists, drop_database, create_database
+from sqlalchemy_utils import database_exists as su_database_exists, \
+    drop_database as su_drop_database, create_database as su_create_database
 
 # local
 from api import System
 
 system = System()
 
-__db_uri = 'mysql://root:19850321@localhost:3306/api'
-
 
 @system.route('/')
 def hello_world():
-    return u'HelloWorld你好'
+    return u'Hello Gmagon'
 
-@system.route('/admin/db/drop')
+@system.route('/admin_gmagon/db/drop')
 def drop_database():
-    if database_exists(__db_uri):
-        drop_database(__db_uri)
+    if su_database_exists(system.config['SQLALCHEMY_DATABASE_URI']):
+        su_drop_database(system.config['SQLALCHEMY_DATABASE_URI'])
+        return u'database be removed...'
+    else:
+        return u'database not exit'
 
-@system.route('/admin/db/create')
+@system.route('/admin_gmagon/db/create')
 def create_database():
-    if not database_exists(__db_uri):
-        create_database(__db_uri)
+    if not su_database_exists(system.config['SQLALCHEMY_DATABASE_URI']):
+        su_create_database(system.config['SQLALCHEMY_DATABASE_URI'])
+        return u'create database...'
+    else:
+        return u'database is exist'
 
 def runApp():
     system.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
-    system.config['SQLALCHEMY_DATABASE_URI'] = __db_uri
+    system.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:19850321@localhost:3306/api'
+
+    # 自动创建数据库
+    create_database()
 
     system.run(debug=True, host='0.0.0.0')
 
