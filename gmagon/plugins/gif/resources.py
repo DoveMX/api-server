@@ -611,6 +611,70 @@ def __install_gif_api_Ver_1_0_0(api):
     ############################################################
     """
 
+    class ResTraceUserData(Resource):
+        def __init__(self, props=None, cls=None):
+            self.props = props
+            self.cls = cls
+            self.post_args = reqparse.RequestParser()
+            self.post_args.add_argument('machine_id', type=str, required=True, help='No machine_id provided',
+                                              location='json')
+            self.post_args.add_argument('id', type=int, required=True, help='No id provided',
+                                        location='json')
+        def post(self):
+            try:
+                args = self.post_args.parse_args()
+
+                user = User.query.filter_by(machine_id=args.machine_id).first()
+                item = self.cls.query.filter_by(id= args.id).first()
+
+                if user and item:
+                    query = item.__getattribute__(self.props)
+                    if query:
+                        query.append(user)
+                        return {
+                            'status': 'success'
+                        }
+                    else:
+                        raise Exception('no query obj')
+                else:
+                    raise Exception('no found user or item')
+
+
+            except Exception as e:
+                return _get_err_info(e.message)
+
+    class ResItemDownloadUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='download_users', cls=Item)
+
+    class ResItemPreviewUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='preview_users', cls=Item)
+
+    class ResItemCollectionUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='collection_users', cls=Item)
+
+    class ResItemShareUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='share_users', cls=Item)
+
+    class ResSetDownloadUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='download_users', cls=Set)
+
+    class ResSetPreviewUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='preview_users', cls=Set)
+
+    class ResSetCollectionUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='collection_users', cls=Set)
+
+    class ResSetShareUser(ResTraceUserData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='share_users', cls=Set)
+
     api.add_resource(TestUnicode, pr + '/testunicode')
 
     # users
@@ -739,6 +803,16 @@ def __install_gif_api_Ver_1_0_0(api):
     """
     api.add_resource(ResItemsByCategoryId, pr + '/items_by_category_id/<int:category_id>', endpoint='items_by_category')
 
+    # 记录以下数据
+    """只支持POST方式
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_download -d "{\"machine_id\":\"NOGUserMachines\", \"item_id\":1}" -X POST -v
+    """
+    api.add_resource(ResItemDownloadUser, pr + '/items_download', endpoint='items_download')
+    api.add_resource(ResItemPreviewUser, pr + '/items_preview', endpoint='items_preview')
+    api.add_resource(ResItemCollectionUser, pr + '/items_collection', endpoint='items_collection')
+    api.add_resource(ResItemShareUser, pr + '/items_share', endpoint='items_share')
+
+
     ########################################
     # Sets
     """
@@ -754,6 +828,7 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')
     api.add_resource(ResSetItemsBySetId, pr + '/sets_items/<int:set_id>', endpoint='sets_items')
 
+
     # 获取单个Set的元素，并包含Item的次序
     """
     ===GET
@@ -761,6 +836,17 @@ def __install_gif_api_Ver_1_0_0(api):
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -d "{\"deep\":1}" -X GET -v
     """
     api.add_resource(ResSetItemsOrderBySetId, pr + '/sets_items_order/<int:set_id>', endpoint='sets_items_order')
+
+
+    # 记录以下数据
+    """只支持POST方式
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_download -d "{\"machine_id\":\"NOGUserMachines\", \"item_id\":1}" -X POST -v
+    """
+    api.add_resource(ResSetDownloadUser, pr + '/sets_download', endpoint='sets_download')
+    api.add_resource(ResSetPreviewUser, pr + '/sets_preview', endpoint='sets_preview')
+    api.add_resource(ResSetCollectionUser, pr + '/sets_collection', endpoint='sets_collection')
+    api.add_resource(ResSetShareUser, pr + '/sets_share', endpoint='sets_share')
+
 
     ########################################
     # CommentsForItem
