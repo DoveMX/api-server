@@ -187,7 +187,7 @@ class User(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     # 关联的机器码
-    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), doc='唯一ID')  # 存储真实的机器码
+    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), nullable=False, unique=True, doc='唯一ID')  # 存储真实的机器码
     machine = db.relationship('GUserMachines', backref='gif_user')
 
     # 关注与被关注
@@ -467,7 +467,7 @@ tbl_set_items = db.Table(constTablePrefix + 'set_items',
                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
                                    primary_key=True),
                          db.Column('order', db.Integer, nullable=False, default=0, doc='排序'),
-                         db.Column('note', db.String(4000), nullable=True, default='', doc='针对该Item在Set中的介绍，有别于Item自己的描述'),
+                         db.Column('bewrite', db.String(4000), nullable=True, default='', doc='针对该Item在Set中的介绍，有别于Item自己的描述'),
 
                          db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
                          db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
@@ -621,6 +621,7 @@ class Set(db.Model):
         else:
             return db.session.query(Item,
                                     tbl_set_items.c.order,
+                                    tbl_set_items.c.bewrite,
                                     tbl_set_items.c.active,
                                     tbl_set_items.c.copyright_protection,
                                     tbl_set_items.c.is_shield,

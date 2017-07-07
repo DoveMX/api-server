@@ -290,9 +290,7 @@ def __install_common_api_Ver_1_0_0(api):
     1. 无分页处理
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":{\"os\":\"MacOSX\"}}" -X GET -v
     1.1 单个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":\"os like 'mac'\"}" -X GET -v
-    1.2 多个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":\"id > 1, id > 4\"}" -X GET -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"where\":\"machines.os.like(\"mac\")\"}" -X GET -vv
     2. 有分页处理
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/api/v1.0.0/machines -d "{\"page\":1, \"per_page\":20, \"where\":{\"os\":\"MacOSX\"}}" -X GET -v
 
@@ -617,6 +615,17 @@ def __install_gif_api_Ver_1_0_0(api):
 
     # users
     """
+    **[GET]
+    1. 无分页处理
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_user -d "{\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X GET -v
+    
+    **[POST]
+    1. create
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"create\",\"where\":{\"machine_id\":\"NOGUserMachines\"},\"data\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
+    2. update
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"update\",\"where\":{\"machine_id\":\"NOGUserMachines\"},\"data\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
+    3. delete
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"delete\",\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
     """
     api.add_resource(APIUsers, pr + '/data_user')
 

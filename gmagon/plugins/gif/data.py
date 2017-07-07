@@ -48,10 +48,18 @@ def __get_data_with_filter_list(cls, filter={}, update_dict={}, createNew=True):
 
 
 def __get_data_with_filter_query(cls=None, filter=None):
+    query = None
     if isinstance(filter, types.DictType):
-        return cls.query.filter_by(**filter)
+        query = cls.query.filter_by(**filter)
     elif isinstance(filter, types.ListType):
-        return cls.query.filter(*filter)
+        query = cls.query.filter(*filter)
+
+    if query:
+        print  "SQL: %s\n" % str(query.statement)
+
+    return query
+
+
 
 
 def __getSpecDataTypeItem(name, description='', createNew=True):
