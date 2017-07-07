@@ -840,7 +840,7 @@ def __install_gif_api_Ver_1_0_0(api):
 
     # 记录以下数据
     """只支持POST方式
-    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/items_download -d "{\"machine_id\":\"NOGUserMachines\", \"item_id\":1}" -X POST -v
+    >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:5000/plugin/gif/api/v1.0.0/sets_download -d "{\"machine_id\":\"NOGUserMachines\", \"item_id\":1}" -X POST -v
     """
     api.add_resource(ResSetDownloadUser, pr + '/sets_download', endpoint='sets_download')
     api.add_resource(ResSetPreviewUser, pr + '/sets_preview', endpoint='sets_preview')
