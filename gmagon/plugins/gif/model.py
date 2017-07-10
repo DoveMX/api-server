@@ -3,6 +3,7 @@
 
 # system package
 from datetime import datetime
+import types
 
 # libs
 from sqlalchemy.ext.orderinglist import ordering_list
@@ -40,6 +41,15 @@ class _Utils:
             if hasattr(ele, 'getBaseJSON'):
                 data_list.append(ele.getBaseJSON())
         return data_list
+
+    @staticmethod
+    def auto_calc_count(obj):
+        if isinstance(obj, db.Query):
+            return obj.count()
+        elif isinstance(obj, types.ListType):
+            return  len(obj)
+        else:
+            print('no match the obj type = %s' % type(obj))
 
 class DataTypes(db.Model):
     """
@@ -102,10 +112,10 @@ class Categories(db.Model):
     def getJSON(self):
         info = self.getBaseJSON()
         info.update({
-            'items_count': self.items.count(),
-            'sets_count': self.sets.count(),
-            'tags_count': self.tags.count(),
-            'children_count': self.children.count()
+            'items_count': _Utils.auto_calc_count(self.items),
+            'sets_count': _Utils.auto_calc_count(self.sets),
+            'tags_count': _Utils.auto_calc_count(self.tags),
+            'children_count': _Utils.auto_calc_count(self.children)
         })
         return info
 
@@ -135,6 +145,7 @@ class Tags(db.Model):
     description = db.Column(db.String(4000), nullable=False, doc='简介')
     category_id = db.Column(db.ForeignKey(constTablePrefix + 'categories.id'))
     type_id = db.Column(db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
+    category = db.relationship('Categories', backref='tags')
 
 
 
@@ -154,8 +165,8 @@ class Tags(db.Model):
     def getJSON(self):
         info = self.getBaseJSON()
         info.update({
-            'items_count': self.items.count(),
-            'sets_count': self.sets.count(),
+            'items_count': _Utils.auto_calc_count(self.items),
+            'sets_count': _Utils.auto_calc_count(self.sets),
         })
         return info
 
@@ -395,9 +406,9 @@ class Item(db.Model):
     def getJSON(self):
         info = self.getBaseJSON()
         info.update({
-            'tags_count': self.tags.count(),
-            'categories_count': self.categories.count(),
-            'sets_count': self.sets.count(),
+            'tags_count': _Utils.auto_calc_count(self.tags),
+            'categories_count': _Utils.auto_calc_count(self.categories),
+            'sets_count': _Utils.auto_calc_count(self.sets),
         })
         return info
 
@@ -589,9 +600,9 @@ class Set(db.Model):
         """
         info = self.getBaseJSON()
         info.update({
-            'tags_count':self.tags.count(),
-            'categories_count': self.categories.count(),
-            'items_count': self.items.count(),
+            'tags_count': _Utils.auto_calc_count(self.tags),
+            'categories_count': _Utils.auto_calc_count(self.categories),
+            'items_count': _Utils.auto_calc_count(self.items),
         })
         return info
 
@@ -689,7 +700,7 @@ DataTypes.tags = db.relationship('Tags', backref='type', order_by=Tags.id)
 
 ##See: https://stackoverflow.com/questions/6782133/sqlalchemy-one-to-many-relationship-on-single-table-inheritance-declarative
 Categories.children = db.relationship('Categories', backref='parent', remote_side=Categories.id)
-Categories.tags = db.relationship('Tags', backref='category', order_by=Tags.id)
+# Categories.tags = db.relationship('Tags', backref='category', order_by=Tags.id)
 
 # CommentsForItem
 CommentsForItem.children = db.relationship('CommentsForItem', backref='parent', remote_side=CommentsForItem.id)

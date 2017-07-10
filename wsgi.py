@@ -87,7 +87,7 @@ def create_database():
 
 def runApp():
     system.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
-    system.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:19850321@localhost:3306/api'
+    system.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:19850321db@localhost:3306/api'
 
     # 自动创建数据库
     create_database()
