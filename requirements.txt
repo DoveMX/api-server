@@ -6,3 +6,8 @@
 pip install Flask
 pip install flask-sqlalchemy
 pip install MySQL-python
+
+
+==========
+注意：安装MySQL-python
+

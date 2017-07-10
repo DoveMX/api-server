@@ -24,7 +24,7 @@ from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
 
 # local
-from api import System
+from system import System
 
 system = System()
 
