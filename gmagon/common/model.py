@@ -10,8 +10,8 @@ import re
 from flask_login import UserMixin
 
 # local
-from api.gmagon.database import db
-from api.gmagon.common.util import format_datetime
+from gmagon.database import db
+from gmagon.common.util import format_datetime
 
 
 def retain():

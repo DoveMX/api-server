@@ -10,9 +10,9 @@ from sqlalchemy.orm.collections import column_mapped_collection
 from sqlalchemy.orm import aliased
 
 # project
-from api.gmagon.database import db
-from api.gmagon.common.util import format_datetime
-from api.gmagon.plugins.gif.util import constTablePrefix
+from gmagon.database import db
+from gmagon.common.util import format_datetime
+from gmagon.plugins.gif.util import constTablePrefix
 
 class _Utils:
     @staticmethod

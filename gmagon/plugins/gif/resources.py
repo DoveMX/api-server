@@ -9,12 +9,12 @@ import types
 from flask_restful import Resource, reqparse
 from sqlalchemy import util
 
-from api.gmagon.database import db
-from api.gmagon.common.model import GUser, GUserMachines
-from api.gmagon.plugins.gif.util import constUriPrefix
-from api.gmagon.plugins.gif.model import \
+from gmagon.database import db
+from gmagon.common.model import GUser, GUserMachines
+from gmagon.plugins.gif.util import constUriPrefix
+from gmagon.plugins.gif.model import \
     DataTypes, Categories, Tags, Item, Set, User, UserTrace, UserPush, UserAnalysisAUTO
-from api.gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_getSpecCategroyItem, \
+from gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_getSpecCategroyItem, \
     api_getSpecDataTypeItemById, \
     api_get_common_data_list, \
     api_get_data_with_filter_query, \

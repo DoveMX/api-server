@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from api.gmagon.database import db
+from gmagon.database import db
 from model import DataTypes, Categories, Tags, Item, Set
 from data import api_checkSessionAdd, api_getSpecTagItem, api_getSpecCategroyItem, api_getSpecDataTypeItem
 

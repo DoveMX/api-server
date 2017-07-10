@@ -5,8 +5,8 @@
 import types
 
 # local
-from api.gmagon.database import db
-from api.gmagon.plugins.gif.model import DataTypes, Categories, Tags
+from gmagon.database import db
+from gmagon.plugins.gif.model import DataTypes, Categories, Tags
 
 
 def __checkSessionAdd(data_item):

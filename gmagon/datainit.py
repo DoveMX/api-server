@@ -5,8 +5,8 @@
 from flask_restful import Resource, reqparse
 
 #: local
-from api.gmagon.common.model import retain as common_model_retain
-from api.gmagon.plugins.gif.data import init_all as subsystem_gif_data_create
+from gmagon.common.model import retain as common_model_retain
+from gmagon.plugins.gif.data import init_all as subsystem_gif_data_create
 
 
 def init(api):
