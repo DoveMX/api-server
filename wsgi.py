@@ -1,15 +1,51 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import os
-
 import sys
-if sys.version_info.major < 3:
-    reload(sys)
-sys.setdefaultencoding('utf-8')
-print('system-default-encoding: ' + sys.getdefaultencoding())
+G_ENABLE_RESETENCODING = True # 是否开启重新设置默认编码
+if G_ENABLE_RESETENCODING:
+    #Python IDLE reload(sys)后无法正常执行命令的原因
+    #http://www.2cto.com/kf/201411/355112.html
+    G_stdi,G_stdo,G_stde=sys.stdin,sys.stdout,sys.stderr
+    if sys.version_info.major < 3:
+        reload(sys)
+        sys.setdefaultencoding('utf8')
+        sys.stdin,sys.stdout,sys.stderr = G_stdi,G_stdo,G_stde
 
+    print('system-default-encoding: ' + sys.getdefaultencoding())
+
+import traceback
+
+### 添加自定义目录到Python的运行环境中
+CUR_DIR_NAME = os.path.dirname(__file__)
+def g_add_path_to_sys_paths(path):
+    if os.path.exists(path):
+        print('Add myself packages = %s' % path)
+        sys.path.extend([path]) #规范Windows或者Mac的路径输入
+
+try:
+    curPath = os.path.normpath(os.path.abspath(CUR_DIR_NAME))
+    path1 = os.path.normpath(os.path.abspath(os.path.join(CUR_DIR_NAME, 'self-site')))
+    path2 = os.path.normpath(os.path.abspath(os.path.join(CUR_DIR_NAME, 'rs/self-site')))
+
+    pathList = [curPath, path1, path2]
+    for path in pathList:
+        g_add_path_to_sys_paths(path)
+
+    ##添加"",当前目录.主要是与标准Python的路径相对应.
+    if '' not in sys.path:
+        sys.path.insert(0,'')
+
+except Exception as e:
+    pass
+
+### [End] 添加自定义目录到Python的运行环境中
+print('sys.path =', sys.path)
+
+
+
+################################################################
 try:
     virtenv = os.environ['OPENSHIFT_PYTHON_DIR'] + '/virtenv/'
     virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
