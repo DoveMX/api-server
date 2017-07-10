@@ -225,7 +225,6 @@ def init_all():
     :return:
     '''
     print('call one ...')
-    return
 
     type_data = __getSpecDataTypeItem(name='Data', description='基础的数据类型')
     type_item_category = __getSpecDataTypeItem(name='ItemCategory', description='Item分类的类型')

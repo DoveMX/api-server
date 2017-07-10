@@ -856,7 +856,6 @@ def __install_gif_api_Ver_1_0_0(api):
 
     #
 
-
 def install(api):
     """Install for RESTFull framework"""
     __install_common_api_Ver_1_0_0(api)

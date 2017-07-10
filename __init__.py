@@ -37,20 +37,12 @@ class System(Flask):
         db.init_app(self)
         with self.app_context():
             db.create_all()
-            plugin_data_init()
 
     def run(self, host=None, port=None, debug=None, **options):
         self.init_database()
         self.configRESTFULL()
 
         super(self.__class__, self).run(host=host, port=port, debug=debug, **options)
-
-    def bootstrap(self):
-        """Bootstrap the system
-        """
-
-        with self.app_context():
-            self.init_database()
 
     def configRESTFULL(self):
 
@@ -66,3 +58,4 @@ class System(Flask):
 
         api = Api(self)
         plugin_resources_install(api)
+        plugin_data_init(api)
