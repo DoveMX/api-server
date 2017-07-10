@@ -48,6 +48,8 @@ class _Utils:
             return obj.count()
         elif isinstance(obj, types.ListType):
             return  len(obj)
+        elif obj is None:
+            return 0
         else:
             print('no match the obj type = %s' % type(obj))
 
