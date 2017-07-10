@@ -6,9 +6,9 @@ import os
 from flask import Flask
 from flask_restful import Resource, Api
 
-from gmagon.database import db
-from gmagon.datainit import init as plugin_data_init
-from gmagon.resources import install as plugin_resources_install
+from api.gmagon.database import db
+from api.gmagon.datainit import init as plugin_data_init
+from api.gmagon.resources import install as plugin_resources_install
 
 
 class System(Flask):
