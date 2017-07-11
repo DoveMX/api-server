@@ -561,6 +561,7 @@ class Set(db.Model):
     items = db.relationship('Item', secondary=tbl_set_items,
                             primaryjoin=(id == tbl_set_items.c.set_id),
                             order_by=tbl_set_items.c.order.asc(),
+                            collection_class=ordering_list(tbl_set_items.c.order),
                             backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
 
     # 跟踪信息
