@@ -100,6 +100,12 @@ def create_database():
     else:
         return u'database is exist'
 
+@app.route('/admin_gmagon/db/isexist')
+def database_is_exist():
+    if not su_database_exists(app.config['SQLALCHEMY_DATABASE_URI']):
+        return u'[exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
+    else:
+        return u'[not exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
 
 def runApp():
     print("[X] runApp begin...")
