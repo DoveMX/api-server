@@ -21,8 +21,6 @@ except Exception:
 if app_for_rhc:
     from apiapp import app as application
     print(u'appVersion:' + application.version())
-    application.init_database()
-    application.configRESTFULL()
 else:
     from apiapp import runApp
     runApp()
