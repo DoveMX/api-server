@@ -60,7 +60,7 @@ print("[X] import System")
 # local
 from apiflask import APIFlask
 
-app = APIFlask()
+app = APIFlask(__name__.split('.')[0])
 
 
 # Step1: 配置
