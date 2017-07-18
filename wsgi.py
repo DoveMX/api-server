@@ -4,6 +4,7 @@
 import sys
 
 import os
+import traceback
 
 G_ENABLE_RESETENCODING = True  # 是否开启重新设置默认编码
 if G_ENABLE_RESETENCODING:
@@ -100,9 +101,14 @@ def runApp():
 
     try:
         # Get the environment information we need to start the server
-        ip = os.environ['OPENSHIFT_PYTHON_IP']
+        # ip = os.environ['OPENSHIFT_PYTHON_IP']
         port = int(os.environ['OPENSHIFT_PYTHON_PORT'])
         host_name = os.environ['OPENSHIFT_GEAR_DNS']
+
+        # 获取数据库中的配置信息
+        db_server_ip = os.environ['OPENSHIFT_MYSQL_DB_HOST']
+        db_server_port = os.environ['OPENSHIFT_MYSQL_DB_PORT']
+
         mysql_server_url = os.environ['OPENSHIFT_MYSQL_DB_URL']
         server_enable_debug = False
     except Exception:
@@ -124,4 +130,7 @@ def runApp():
 
 
 if __name__ == '__main__':
-    runApp()
+    try:
+        runApp()
+    except Exception, e:
+        print(traceback.format_exc())
