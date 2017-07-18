@@ -108,6 +108,10 @@ def runApp():
     except Exception:
         pass
 
+    # 打印一些关键的数据
+    print('\nip=%s, port=%d' % (ip, port))
+    print('mysql_server_url = %s' % mysql_server_url)
+
     # 配置系统
     system.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
     system.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + '/api'
