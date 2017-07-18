@@ -91,7 +91,7 @@ def create_database():
 
 def runApp():
     # 获取远程服务器上的账号及密码
-    mysql_server_url = "mysql://root:19850321db@localhost:3306"
+    mysql_server_url = "mysql://root:19850321db@localhost:3306/"
 
     # 获取IP地址、端口及主机名称
     ip = '0.0.0.0'
@@ -114,7 +114,7 @@ def runApp():
 
     # 配置系统
     system.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
-    system.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + '/api'
+    system.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
 
     # 自动创建数据库
     create_database()
