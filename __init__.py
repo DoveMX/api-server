@@ -22,7 +22,7 @@ class System(Flask):
 
 
     def version(self):
-        return '1.0.0'
+        return '1.0.1'
 
     def configure(self):
         '''
@@ -35,6 +35,7 @@ class System(Flask):
         # self.config['HOST'] = '0.0.0.0'
 
     def init_database(self):
+        print(u'init_database ... ')
         db.init_app(self)
         with self.app_context():
             db.create_all()
@@ -55,6 +56,7 @@ class System(Flask):
         app = Flask(__name__)
         app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
         """
+        print(u'configRESTFULL ... ')
 
         self.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 
