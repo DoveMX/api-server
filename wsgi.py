@@ -424,11 +424,13 @@ def runApp():
 
 
 def oldRunApp():
-    from wsgiref.simple_server import make_server
+    # from wsgiref.simple_server import make_server
 
     # httpd = make_server('localhost', 8051, application)
     # Wait for a single request, serve it and quit.
     # httpd.handle_request()
+
+    pass
 
 print("[X] main function...")
 
@@ -437,6 +439,7 @@ if __name__ == '__main__':
         print("[X] main begin...")
 
         oldRunApp()
+
         print("[x] call runApp...")
         runApp()
     except Exception, e:
