@@ -437,6 +437,7 @@ if __name__ == '__main__':
         print("[X] main begin...")
 
         oldRunApp()
+        print("[x] call runApp...")
         runApp()
     except Exception, e:
         print(traceback.format_exc())
