@@ -16,9 +16,10 @@ class System(Flask):
     """
 
     def __init__(self, *args, **kwargs):
+        print(u'System(Flask) ... ')
         super(self.__class__, self).__init__(__name__, static_folder=None, *args, **kwargs)
-
         self.configure()
+
 
     def version(self):
         return '1.0.0'
