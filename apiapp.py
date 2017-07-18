@@ -49,6 +49,7 @@ print('sys.path =', sys.path)
 
 
 print("[X] import sqlalchemy_utils")
+
 # lib
 from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
@@ -71,6 +72,7 @@ except Exception, e:
     print(e.message)
 
 # 配置系统
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
 app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
 
@@ -106,6 +108,8 @@ def database_is_exist():
         return u'[exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
     else:
         return u'[not exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
+
+
 
 def runApp():
     print("[X] runApp begin...")
