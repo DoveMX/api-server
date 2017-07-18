@@ -54,12 +54,28 @@ from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
 
 print("[X] import System")
+
+
 # local
 from system import System
 
 app = System()
 
-# -----------------------------------------
+
+# Step1: 配置
+
+mysql_server_url = "mysql://root:19850321db@localhost:3306/"  # 获取远程服务器上的账号及密码
+try:
+    mysql_server_url = os.environ['OPENSHIFT_MYSQL_DB_URL']
+except Exception, e:
+    print(e.message)
+
+# 配置系统
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
+app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + '/api'
+
+
+# Step2: 配置路由
 print("[X] defined some admin route..")
 
 @app.route('/')
@@ -115,22 +131,8 @@ def runApp():
     print('\nip=%s, port=%d' % (ip, port))
     print('mysql_server_url = %s' % mysql_server_url)
 
-    # 配置系统
-    app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
-    app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
-
     # 自动创建数据库
     create_database()
 
     # 启动系统
     app.run(debug=server_enable_debug, host=ip, port=port)
-
-print("[X] main function...")
-
-if __name__ == '__main__':
-    try:
-        print("[X] main begin...")
-        print("[x] call runApp...")
-        runApp()
-    except Exception, e:
-        print(traceback.format_exc())
