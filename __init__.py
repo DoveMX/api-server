@@ -39,6 +39,7 @@ class System(Flask):
             db.create_all()
 
     def run(self, host=None, port=None, debug=None, **options):
+        print(u'run custom Flask Class run ... ')
         self.init_database()
         self.configRESTFULL()
 

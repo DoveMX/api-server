@@ -24,6 +24,12 @@ else:
     from apiapp import runApp
     runApp()
 
+"""
+针对部署到OpenShift服务器上的事情。一定要看：
+http://www.cnblogs.com/lgphp/p/3840667.html
+
+
+"""
 
 
 
