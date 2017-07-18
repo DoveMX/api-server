@@ -71,6 +71,7 @@ from system import System
 
 system = System()
 
+# -----------------------------------------
 print("[X] defined some admin route..")
 
 @system.route('/')
@@ -97,6 +98,8 @@ def create_database():
 
 
 def runApp():
+    print("[X] runApp begin...")
+
     # 获取远程服务器上的账号及密码
     mysql_server_url = "mysql://root:19850321db@localhost:3306/"
 
@@ -139,6 +142,7 @@ print("[X] main function...")
 
 if __name__ == '__main__':
     try:
+        print("[X] main begin...")
         runApp()
     except Exception, e:
         print(traceback.format_exc())
