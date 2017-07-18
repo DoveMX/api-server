@@ -428,14 +428,15 @@ def oldRunApp():
 
     httpd = make_server('localhost', 8051, application)
     # Wait for a single request, serve it and quit.
-    httpd.handle_request()
+    # httpd.handle_request()
 
 print("[X] main function...")
 
 if __name__ == '__main__':
     try:
         print("[X] main begin...")
-        # runApp()
+
         oldRunApp()
+        runApp()
     except Exception, e:
         print(traceback.format_exc())
