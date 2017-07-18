@@ -423,16 +423,19 @@ def runApp():
     system.run(debug=server_enable_debug, host=ip, port=port)
 
 
+def oldRunApp():
+    from wsgiref.simple_server import make_server
+
+    httpd = make_server('localhost', 8051, application)
+    # Wait for a single request, serve it and quit.
+    httpd.handle_request()
+
 print("[X] main function...")
 
 if __name__ == '__main__':
     try:
         print("[X] main begin...")
         # runApp()
-        from wsgiref.simple_server import make_server
-
-        httpd = make_server('localhost', 8051, application)
-        # Wait for a single request, serve it and quit.
-        httpd.handle_request()
+        oldRunApp()
     except Exception, e:
         print(traceback.format_exc())
