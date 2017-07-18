@@ -58,9 +58,9 @@ print("[X] import System")
 
 
 # local
-from system import System
+from apiflask import APIFlask
 
-app = System()
+app = APIFlask()
 
 
 # Step1: 配置

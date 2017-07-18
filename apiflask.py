@@ -11,7 +11,7 @@ from gmagon.datainit import init as plugin_data_init
 from gmagon.resources import install as plugin_resources_install
 
 
-class System(Flask):
+class APIFlask(Flask):
     """继承Flask，创建自定义类
     """
 
