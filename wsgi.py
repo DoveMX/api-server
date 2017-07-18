@@ -71,6 +71,7 @@ from system import System
 
 system = System()
 
+print("[X] defined some admin route..")
 
 @system.route('/')
 def hello_world():
@@ -133,6 +134,8 @@ def runApp():
     # 启动系统
     system.run(debug=server_enable_debug, host=ip, port=port)
 
+
+print("[X] main function...")
 
 if __name__ == '__main__':
     try:
