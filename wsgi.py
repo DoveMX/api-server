@@ -11,10 +11,12 @@ try:
     virtenv = os.environ['OPENSHIFT_PYTHON_DIR'] + '/virtenv/'
     virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
     execfile(virtualenv, dict(__file__=virtualenv))
+    from run import app as application
 except IOError:
     pass
 except Exception:
     pass
+
 
 print("\n app begin... \n")
 
@@ -96,9 +98,6 @@ def create_database():
     else:
         return u'database is exist'
 
-def application(environ, start_response):
-    pass
-
 
 def runApp():
     print("[X] runApp begin...")
@@ -157,6 +156,7 @@ if __name__ == '__main__':
         print("[X] main begin...")
 
         oldRunApp()
+
 
         print("[x] call runApp...")
         runApp()
