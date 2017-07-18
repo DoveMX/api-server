@@ -114,9 +114,6 @@ def database_is_exist():
 def runApp():
     print("[X] runApp begin...")
 
-    # 获取远程服务器上的账号及密码
-    mysql_server_url = "mysql://root:19850321db@localhost:3306/"
-
     # 获取IP地址、端口及主机名称
     ip = '0.0.0.0'
     port = 5000
@@ -128,11 +125,6 @@ def runApp():
         port = int(os.environ['OPENSHIFT_PYTHON_PORT'])
         host_name = os.environ['OPENSHIFT_GEAR_DNS']
 
-        # 获取数据库中的配置信息
-        db_server_ip = os.environ['OPENSHIFT_MYSQL_DB_HOST']
-        db_server_port = os.environ['OPENSHIFT_MYSQL_DB_PORT']
-
-        mysql_server_url = os.environ['OPENSHIFT_MYSQL_DB_URL']
         server_enable_debug = False
     except Exception:
         pass

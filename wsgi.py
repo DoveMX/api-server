@@ -19,7 +19,8 @@ except Exception:
     pass
 
 if app_for_rhc:
-    from apiapp import app as application
+    from apiapp import app as application, runApp
+    runApp()
     print(u'appVersion:' + application.version())
 else:
     from apiapp import runApp
