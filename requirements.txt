@@ -1,13 +1,10 @@
 
-1. 添加环境变量：PATH="$PATH":/usr/local/mysql/bin
-2. 激活venv: source ./venv/bin/activate
-3. 使用pip 安装相应的包
+# This is an implicit value, here for clarity
+--index https://pypi.python.org/simple/
 
-pip install Flask
-pip install flask-sqlalchemy
-pip install MySQL-python
-
-
-==========
-注意：安装MySQL-python
-
+Flask>=0.12.2
+Flask_SQLAlchemy>=2.2
+Flask-RESTful>=0.3.6
+SQLAlchemy-Utils>=0.32.14
+MySQL-python>=1.2.5
+Flask-Login>=0.4.0
