@@ -30,6 +30,9 @@ class System(Flask):
         self.config['BASEDIR'] = os.path.abspath(os.path.dirname(__file__))
         self.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
+        """
+        参考配置文档：http://www.pythondoc.com/flask/config.html
+        """
         # self.config['DEBUG'] = True  ## 开通Debug后，系统重启两次，这是正常的
         # self.config['HOST'] = '0.0.0.0'
 

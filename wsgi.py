@@ -1,28 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import sys
-G_ENABLE_RESETENCODING = True # 是否开启重新设置默认编码
+
+import os
+
+G_ENABLE_RESETENCODING = True  # 是否开启重新设置默认编码
 if G_ENABLE_RESETENCODING:
-    #Python IDLE reload(sys)后无法正常执行命令的原因
-    #http://www.2cto.com/kf/201411/355112.html
-    G_stdi,G_stdo,G_stde=sys.stdin,sys.stdout,sys.stderr
+    # Python IDLE reload(sys)后无法正常执行命令的原因
+    # http://www.2cto.com/kf/201411/355112.html
+    G_stdi, G_stdo, G_stde = sys.stdin, sys.stdout, sys.stderr
     if sys.version_info.major < 3:
         reload(sys)
         sys.setdefaultencoding('utf8')
-        sys.stdin,sys.stdout,sys.stderr = G_stdi,G_stdo,G_stde
+        sys.stdin, sys.stdout, sys.stderr = G_stdi, G_stdo, G_stde
 
     print('system-default-encoding: ' + sys.getdefaultencoding())
 
-import traceback
-
 ### 添加自定义目录到Python的运行环境中
 CUR_DIR_NAME = os.path.dirname(__file__)
+
+
 def g_add_path_to_sys_paths(path):
     if os.path.exists(path):
         print('Add myself packages = %s' % path)
-        sys.path.extend([path]) #规范Windows或者Mac的路径输入
+        sys.path.extend([path])  # 规范Windows或者Mac的路径输入
+
 
 try:
     curPath = os.path.normpath(os.path.abspath(CUR_DIR_NAME))
@@ -35,15 +38,13 @@ try:
 
     ##添加"",当前目录.主要是与标准Python的路径相对应.
     if '' not in sys.path:
-        sys.path.insert(0,'')
+        sys.path.insert(0, '')
 
 except Exception as e:
     pass
 
 ### [End] 添加自定义目录到Python的运行环境中
 print('sys.path =', sys.path)
-
-
 
 ################################################################
 try:
@@ -69,6 +70,7 @@ system = System()
 def hello_world():
     return u'Hello Gmagon'
 
+
 @system.route('/admin_gmagon/db/drop')
 def drop_database():
     if su_database_exists(system.config['SQLALCHEMY_DATABASE_URI']):
@@ -76,6 +78,7 @@ def drop_database():
         return u'database be removed...'
     else:
         return u'database not exit'
+
 
 @system.route('/admin_gmagon/db/create')
 def create_database():
@@ -85,16 +88,36 @@ def create_database():
     else:
         return u'database is exist'
 
+
 def runApp():
+    # 获取远程服务器上的账号及密码
+    mysql_server_url = "mysql://root:19850321db@localhost:3306"
+
+    # 获取IP地址、端口及主机名称
+    ip = '0.0.0.0'
+    port = 5000
+    server_enable_debug = True  # 是否开启服务器调试
+
+    try:
+        # Get the environment information we need to start the server
+        ip = os.environ['OPENSHIFT_PYTHON_IP']
+        port = int(os.environ['OPENSHIFT_PYTHON_PORT'])
+        host_name = os.environ['OPENSHIFT_GEAR_DNS']
+        mysql_server_url = os.environ['OPENSHIFT_MYSQL_DB_URL']
+        server_enable_debug = False
+    except Exception:
+        pass
+
+    # 配置系统
     system.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
-    system.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:19850321db@localhost:3306/api'
+    system.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + '/api'
 
     # 自动创建数据库
     create_database()
 
-    system.run(debug=True, host='0.0.0.0')
+    # 启动系统
+    system.run(debug=server_enable_debug, host=ip, port=port)
 
 
 if __name__ == '__main__':
     runApp()
-

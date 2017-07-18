@@ -359,6 +359,10 @@ class Item(db.Model):
     name = db.Column(db.String(255), nullable=False)
     thumb = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
+    size = db.Column(db.Integer, nullable=True, doc='文件大小')
+    dimensions = db.Column(db.String(32), default='0x0', nullable=True, doc='图片尺寸规格')
+    ext = db.Column(db.String(12), nullable=True, default='gif', doc='文件扩展名')
+    md5 = db.Column(db.String(512), nullable=True, doc='文件的md5值')
     description = db.Column(db.String(4000), nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
