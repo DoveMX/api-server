@@ -101,7 +101,7 @@ def runApp():
 
     try:
         # Get the environment information we need to start the server
-        # ip = os.environ['OPENSHIFT_PYTHON_IP']
+        ip = 'localhost'
         port = int(os.environ['OPENSHIFT_PYTHON_PORT'])
         host_name = os.environ['OPENSHIFT_GEAR_DNS']
 
