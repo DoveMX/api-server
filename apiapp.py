@@ -72,7 +72,7 @@ except Exception, e:
 
 # 配置系统
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
-app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + '/api'
+app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
 
 
 # Step2: 配置路由
