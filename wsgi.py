@@ -6,6 +6,18 @@ import sys
 import os
 import traceback
 
+################################################################
+try:
+    virtenv = os.environ['OPENSHIFT_PYTHON_DIR'] + '/virtenv/'
+    virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
+    execfile(virtualenv, dict(__file__=virtualenv))
+except IOError:
+    pass
+except Exception:
+    pass
+
+print("\n app begin... \n")
+
 G_ENABLE_RESETENCODING = True  # 是否开启重新设置默认编码
 if G_ENABLE_RESETENCODING:
     # Python IDLE reload(sys)后无法正常执行命令的原因
@@ -47,20 +59,13 @@ except Exception as e:
 ### [End] 添加自定义目录到Python的运行环境中
 print('sys.path =', sys.path)
 
-################################################################
-try:
-    virtenv = os.environ['OPENSHIFT_PYTHON_DIR'] + '/virtenv/'
-    virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
-    execfile(virtualenv, dict(__file__=virtualenv))
-except IOError:
-    pass
-except Exception:
-    pass
 
+print("[X] import sqlalchemy_utils")
 # lib
 from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
 
+print("[X] import System")
 # local
 from system import System
 
