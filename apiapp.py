@@ -58,12 +58,14 @@ from sqlalchemy_utils import database_exists as su_database_exists, \
 print("[X] import System")
 
 # local
+from apiflask import APIFlask
 from gmagon.database import db
 from gmagon.datainit import init as plugin_data_init
 from gmagon.resources import install as plugin_resources_install
 
 # 创建唯一实例
-app = Flask(__name__.split('.')[0])
+# app = Flask(__name__.split('.')[0])
+app = APIFlask(__name__.split('.')[0])
 
 # Step1: 配置
 

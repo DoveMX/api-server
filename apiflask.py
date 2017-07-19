@@ -21,7 +21,7 @@ class APIFlask(Flask):
         self.configure()
 
     def version(self):
-        return '1.0.0'
+        return '1.0.1'
 
     def configure(self):
         '''
