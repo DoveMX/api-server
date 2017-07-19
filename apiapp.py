@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
+
 import os
-import traceback
 
 print("\n app begin... \n")
 
@@ -47,21 +47,23 @@ except Exception as e:
 ### [End] 添加自定义目录到Python的运行环境中
 print('sys.path =', sys.path)
 
-
 print("[X] import sqlalchemy_utils")
 
 # lib
+from flask import Flask
+from flask_restful import Api
 from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
 
 print("[X] import System")
 
-
 # local
-from apiflask import APIFlask
+from gmagon.database import db
+from gmagon.datainit import init as plugin_data_init
+from gmagon.resources import install as plugin_resources_install
 
-app = APIFlask(__name__.split('.')[0])
-
+# 创建唯一实例
+app = Flask(__name__.split('.')[0])
 
 # Step1: 配置
 
@@ -76,9 +78,20 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
 app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
 
+"""
+## flask-restful 中文返回的响应变成了 unicode literal
+解决方案
+指定 RESTFUL_JSON 配置项：
+app = Flask(__name__)
+app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
+"""
+print(u'configRESTFULL ... ')
+
+app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 
 # Step2: 配置路由
 print("[X] defined some admin route..")
+
 
 @app.route('/')
 def hello_world():
@@ -102,6 +115,7 @@ def create_database():
     else:
         return u'database is exist'
 
+
 @app.route('/admin_gmagon/db/isexist')
 def database_is_exist():
     if not su_database_exists(app.config['SQLALCHEMY_DATABASE_URI']):
@@ -109,6 +123,33 @@ def database_is_exist():
     else:
         return u'[exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
 
+
+@app.route('/admin_gmagon/recfg')
+def system_recfg():
+    print(u'call system_recfg')
+    system_recfg_init_database()
+    system_recfg_config_restful()
+
+
+@app.route('/admin_gmagon/recfg_init_database')
+def system_recfg_init_database():
+    print(u'call system_recfg_init_database')
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+
+
+@app.route('/admin_gmagon/recfg_config_restful')
+def system_recfg_config_restful():
+    print(u'call system_recfg_config_restful')
+    api = Api(app)
+    plugin_resources_install(api)
+    plugin_data_init(api)
+
+
+"""
+Test
+"""
 
 
 def runApp():
