@@ -233,6 +233,10 @@ def init_all():
     type_set_tag = __getSpecDataTypeItem(name='SetTag', description='Set标签的类型')
     type_user_analysis = __getSpecDataTypeItem(name='AnalysisType', description='分析数据类型')
 
+    db.session.commit()
+    return
+
+
     __initDataForItemAndSetCommon(type_item_category, type_item_tag)
     __initDataForItemAndSetCommon(type_set_category, type_set_tag)
 
@@ -240,7 +244,7 @@ def init_all():
     from api.gmagon.plugins.gif.test import init_test_data
     init_test_data()
 
-    db.session.commit()
+
 
 
 def api_session_commit():
