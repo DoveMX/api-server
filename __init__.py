@@ -40,6 +40,10 @@ class System(Flask):
         with self.app_context():
             db.create_all()
 
+    def wsgi_app(self, environ, start_response):
+        print(u'run custom Flask Class wsgi_app ... ')
+        super(self.__class__, self).wsgi_app(environ, start_response)
+
     def run(self, host=None, port=None, debug=None, **options):
         print(u'run custom Flask Class run ... ')
         self.init_database()
