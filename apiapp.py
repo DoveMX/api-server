@@ -47,7 +47,7 @@ except Exception as e:
 ### [End] 添加自定义目录到Python的运行环境中
 print('sys.path =', sys.path)
 
-print("[X] import sqlalchemy_utils")
+print(u"[X] import sqlalchemy_utils")
 
 # lib
 from flask import Flask
@@ -55,7 +55,7 @@ from flask_restful import Api
 from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
 
-print("[X] import System")
+print(u"[X] import System")
 
 # local
 from apiflask import APIFlask
@@ -87,12 +87,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
 app = Flask(__name__)
 app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 """
-print(u'configRESTFULL ... ')
+print(u'[X] configRESTFULL ... ')
 
 app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 
 # Step2: 配置路由
-print("[X] defined some admin route..")
+print(u"[X] defined some admin route..")
 
 
 @app.route('/')
@@ -148,6 +148,9 @@ def system_recfg_config_restful():
     plugin_resources_install(api)
     plugin_data_init(api)
 
+
+# 3. 启动部分内容初始化
+app.before_run()
 
 """
 Test

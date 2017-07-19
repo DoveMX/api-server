@@ -21,7 +21,9 @@ class APIFlask(Flask):
         self.configure()
 
     def version(self):
-        return '1.0.1'
+        ver = '1.0.1'
+        print('[x] APIFlask version = %s' % ver)
+        return ver
 
     def configure(self):
         '''
@@ -41,10 +43,14 @@ class APIFlask(Flask):
         with self.app_context():
             db.create_all()
 
-    def run(self, host=None, port=None, debug=None, **options):
-        print(u'call APIFlask run ...')
+    def before_run(self):
+        print('[x] call before_run')
         self.init_database()
         self.configRESTFULL()
+
+    def run(self, host=None, port=None, debug=None, **options):
+        print(u'call APIFlask run ...')
+        self.before_run()
 
         super(self.__class__, self).run(host=host, port=port, debug=debug, **options)
 
