@@ -42,6 +42,7 @@ class APIFlask(Flask):
             db.create_all()
 
     def run(self, host=None, port=None, debug=None, **options):
+        print(u'call APIFlask run ...')
         self.init_database()
         self.configRESTFULL()
 
