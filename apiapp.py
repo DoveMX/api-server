@@ -126,38 +126,16 @@ def database_is_exist():
         return u'[exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
 
 
-@app.route('/admin_gmagon/recfg')
-def system_recfg():
-    print(u'call system_recfg')
-    system_recfg_init_database()
-    system_recfg_config_restful()
-
-
-@app.route('/admin_gmagon/recfg_init_database')
-def system_recfg_init_database():
-    print(u'call system_recfg_init_database')
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-
-
-@app.route('/admin_gmagon/recfg_config_restful')
-def system_recfg_config_restful():
-    print(u'call system_recfg_config_restful')
-    api = Api(app)
-    plugin_resources_install(api)
-    plugin_data_init(api)
-
-
-# 3. 启动部分内容初始化
-app.before_run()
+# 3. 启动前的最后准备
+create_database()  # 创建数据库，如果数据库不存在的情况下
+app.before_run()   # app run 之前需要调用支持插件配置等操作
 
 """
 Test
 """
 
 
-def runApp():
+def run_app_for_test():
     print("[X] runApp begin...")
 
     # 获取IP地址、端口及主机名称
@@ -181,6 +159,9 @@ def runApp():
 
     # 自动创建数据库
     create_database()
+
+    # 启动前需要运行
+    app.before_run()
 
     # 启动系统
     app.run(debug=server_enable_debug, host=ip, port=port)

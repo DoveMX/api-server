@@ -48,12 +48,6 @@ class APIFlask(Flask):
         self.init_database()
         self.configRESTFULL()
 
-    def run(self, host=None, port=None, debug=None, **options):
-        print(u'call APIFlask run ...')
-        self.before_run()
-
-        super(self.__class__, self).run(host=host, port=port, debug=debug, **options)
-
     def configRESTFULL(self):
 
         """

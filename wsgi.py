@@ -22,8 +22,8 @@ if app_for_rhc:
     from apiapp import app as application
     print(u'appVersion:' + application.version())
 else:
-    from apiapp import runApp
-    runApp()
+    from apiapp import run_app_for_test
+    run_app_for_test()
 
 """
 针对部署到OpenShift服务器上的事情。一定要看：
