@@ -240,7 +240,7 @@ def init_all():
     return
 
     # 交叉使用import包，非全局引用，有效处理
-    from api.gmagon.plugins.gif.test import init_test_data
+    from gmagon.plugins.gif.test import init_test_data
     init_test_data()
 
 

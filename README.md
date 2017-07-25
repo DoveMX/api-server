@@ -18,3 +18,13 @@ $ cd /Users/ian/gmagon_projects/gmagon_all/api_gmagon_web/python/
 $ source ./venv/bin/activate
 $ python api/wsgi.py
 `end`
+
+
+#### 启动服务器 
+rhc app-start -a apiserver -n gmagon
+
+#### 停止服务器
+rhc app-stop -a apiserver -n gmagon
+
+#### 查询服务器上的日志
+rhc tail -a apiserver -n gmagon

@@ -50,22 +50,21 @@ print('sys.path =', sys.path)
 print(u"[X] import sqlalchemy_utils")
 
 # lib
-from flask import Flask
-from flask_restful import Api
 from sqlalchemy_utils import database_exists as su_database_exists, \
     drop_database as su_drop_database, create_database as su_create_database
+from flask_cors import CORS
 
 print(u"[X] import System")
 
 # local
 from apiflask import APIFlask
-from gmagon.database import db
-from gmagon.datainit import init as plugin_data_init
-from gmagon.resources import install as plugin_resources_install
 
 # 创建唯一实例
 # app = Flask(__name__.split('.')[0])
 app = APIFlask(__name__.split('.')[0])
+
+# 支持CORS
+CORS(app)
 
 # Step1: 配置
 
@@ -93,6 +92,14 @@ app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 
 # Step2: 配置路由
 print(u"[X] defined some admin route..")
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 
 @app.route('/')
@@ -128,7 +135,7 @@ def database_is_exist():
 
 # 3. 启动前的最后准备
 create_database()  # 创建数据库，如果数据库不存在的情况下
-app.before_run()   # app run 之前需要调用支持插件配置等操作
+app.before_run()  # app run 之前需要调用支持插件配置等操作
 
 """
 Test

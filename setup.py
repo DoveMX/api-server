@@ -8,5 +8,6 @@ setup(name='GmagonAPI',
       url='http://www.python.org/sigs/distutils-sig/',
       install_requires=['Flask>=0.12.2', 'Flask_SQLAlchemy>=2.2',
                         'Flask-RESTful>=0.3.6', 'SQLAlchemy-Utils>=0.32.14',
+                        'Flask-Cors>=3.0.3',
                         'MySQL-python>=1.2.5', 'Flask-Login>=0.4.0'],
      )
