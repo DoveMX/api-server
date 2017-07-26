@@ -78,6 +78,7 @@ except Exception, e:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True  # 设置这一项是每次请求结束后都会自动提交数据库中的变动
 app.config['SQLALCHEMY_DATABASE_URI'] = mysql_server_url + 'api'
+app.config['threaded'] = True
 
 """
 ## flask-restful 中文返回的响应变成了 unicode literal

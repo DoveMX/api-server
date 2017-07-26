@@ -20,12 +20,17 @@ class _Utils:
     def calc_user_op_statistics_count(query):
         """统计与用户相关的常用操作数量"""
         info = {
-            'count': query.count(),
+            'count': 0,
             'download': 0,
             'preview': 0,
             'collection': 0,
             'share': 0
         }
+
+        if query is None:
+            return info
+
+        info['count'] =  query.count()
         for item in query:
             info['download'] += item.download_users.count()
             info['preview'] += item.preview_users.count()
@@ -37,6 +42,9 @@ class _Utils:
     @staticmethod
     def calc_list(query):
         data_list = []
+        if query is None:
+            return data_list
+
         for ele in query:
             if hasattr(ele, 'getBaseJSON'):
                 data_list.append(ele.getBaseJSON())
@@ -172,7 +180,7 @@ class Tags(db.Model):
         })
         return info
 
-    def gertJSONEx(self):
+    def getJSONEx(self):
         info = self.getJSON()
         info.update({
             'items': _Utils.calc_list(self.items),

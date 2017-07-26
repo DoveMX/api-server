@@ -417,7 +417,7 @@ def __install_gif_api_Ver_1_0_0(api):
             'count': len(list)
         }
 
-    def commonGetAllCategoriesAndTags(categoryTypeName='ItemCategory', tagTypeName='ItemTag'):
+    def commonGetAllCategoriesAndTags(categoryTypeName='ItemCategory', tagTypeName='ItemTag', useJsonEx=False):
         type_item_category = api_getSpecDataTypeItem(name=categoryTypeName)
         type_item_tag = api_getSpecDataTypeItem(name=tagTypeName)
 
@@ -425,12 +425,12 @@ def __install_gif_api_Ver_1_0_0(api):
 
         categories = Categories.query.filter_by(type=type_item_category).all()
         for cateogryObj in categories:
-            ele_category = cateogryObj.getJSON()
+            ele_category = cateogryObj.getJSONEx() if useJsonEx else cateogryObj.getJSON()
 
             ele_category['tags'] = []
             tags = cateogryObj.tags
             for tagObj in tags:
-                ele_category['tags'].append(tagObj.getJSON())
+                ele_category['tags'].append(tagObj.getJSONEx() if useJsonEx else tagObj.getJSON())
 
             dataList.append(ele_category)
 
@@ -455,13 +455,13 @@ def __install_gif_api_Ver_1_0_0(api):
         """获取Item所有分类及分类下标签结构"""
 
         def get(self):
-            return commonGetAllCategoriesAndTags('ItemCategory', 'ItemTag')
+            return commonGetAllCategoriesAndTags('ItemCategory', 'ItemTag', useJsonEx=True)
 
     class GetAllCategoriesAndTagsForSet(Resource):
         """获取Set所有分类及分类下标签结构"""
 
         def get(self):
-            return commonGetAllCategoriesAndTags('SetCategory', 'SetTag')
+            return commonGetAllCategoriesAndTags('SetCategory', 'SetTag', useJsonEx=True)
 
     """
     User 用户部分
@@ -621,7 +621,7 @@ def __install_gif_api_Ver_1_0_0(api):
                                               location='json')
             self.post_args.add_argument('where', type=str, required=True, help='find in refCLS',
                                               location='json')
-            self.post_args.add_argument('filter', type=dict, help='find in cls', location='json')
+            self.post_args.add_argument('filter', type=str, help='find in cls', location='json')
 
         def __where(self, in_where):
             where = None
@@ -840,7 +840,7 @@ def __install_gif_api_Ver_1_0_0(api):
     """
     api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/get_all_categories_tags_for_item')
 
-    # 获得Item所有的分类信息，包括分类下的标签信息
+    # 获得Set所有的分类信息，包括分类下的标签信息
     """
     ===GET
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:8051/plugin/gif/api/v1.0.0/get_all_categories_tags_for_set -X GET -v
