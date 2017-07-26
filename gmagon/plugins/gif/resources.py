@@ -610,7 +610,83 @@ def __install_gif_api_Ver_1_0_0(api):
     """
     ############################################################
     """
+    class ResRelationData(Resource):
+        def __init__(self, props=None, cls=None, ref_cls=None):
+            self.props = props
+            self.cls = cls
+            self.refCls = ref_cls
+            self.post_args = reqparse.RequestParser()
 
+            self.post_args.add_argument('op', type=str, required=True, help='No op provided',
+                                              location='json')
+            self.post_args.add_argument('where', type=str, required=True, help='find in refCLS',
+                                              location='json')
+            self.post_args.add_argument('filter', type=dict, help='find in cls', location='json')
+
+        def __where(self, in_where):
+            where = None
+            if in_where is None:
+                return where
+
+            if isinstance(in_where, types.DictType):
+                where = in_where
+            elif in_where:
+                try:
+                    where = eval(in_where)
+                    if not isinstance(where, types.DictType):
+                        where = in_where.split(',')
+                except:
+                    where = in_where.split(',')
+            return where
+
+        def post(self):
+            try:
+                args = self.post_args.parse_args()
+
+                # 查找相关的类型的数据有多少
+                where = self.__where(args.where)
+                ref_data_list = api_get_data_with_filter_query(cls=self.refCls, filter=where).all()
+
+                # 查找符合filter过滤条件的对象
+                filter = self.__where(args.filter)
+                data_list = api_get_data_with_filter_query(cls=self.cls, filter=filter).all()
+
+                # 开始处理
+                for ele in data_list:
+                    for ref_ele in ref_data_list:
+                        query = ele.__getattribute__(self.props)
+                        if query:
+                            query.append(ref_ele)
+
+                return {
+                    'status': 'success'
+                }
+
+            except Exception as e:
+                return _get_err_info(e.message)
+
+    class ResItemTagsData(ResRelationData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='tags', cls=Item, ref_cls=Tags)
+
+    class ResItemCategoriesData(ResRelationData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='categories', cls=Item, ref_cls=Categories)
+
+    class ResSetTagsData(ResRelationData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='tags', cls=Set, ref_cls=Tags)
+
+    class ResSetCategoriesData(ResRelationData):
+        def __init__(self):
+            super(self.__class__, self).__init__(props='categories', cls=Set, ref_cls=Categories)
+
+
+
+
+    """
+    ############################################################
+    """
     class ResTraceUserData(Resource):
         def __init__(self, props=None, cls=None):
             self.props = props
@@ -813,6 +889,12 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResItemShareUser, pr + '/items_share', endpoint='items_share')
 
 
+    # 操作Item所属分类及标签的处理
+    api.add_resource(ResItemTagsData, pr + '/items_tags_data', endpoint='items_tags_data')
+    api.add_resource(ResItemCategoriesData, pr + '/items_categories_data', endpoint='items_categories_data')
+
+
+
     ########################################
     # Sets
     """
@@ -846,6 +928,11 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResSetPreviewUser, pr + '/sets_preview', endpoint='sets_preview')
     api.add_resource(ResSetCollectionUser, pr + '/sets_collection', endpoint='sets_collection')
     api.add_resource(ResSetShareUser, pr + '/sets_share', endpoint='sets_share')
+
+
+    # 操作Item所属分类及标签的处理
+    api.add_resource(ResSetTagsData, pr + '/sets_tags_data', endpoint='sets_tags_data')
+    api.add_resource(ResSetCategoriesData, pr + '/sets_categories_data', endpoint='sets_categories_data')
 
 
     ########################################

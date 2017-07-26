@@ -20,6 +20,21 @@ $ python api/wsgi.py
 `end`
 
 
+---
+## 临时服务器上的操作
+
+##### 定位到文件资源服务器启动
+
+```cmd
+$ cd ~/Documents/files.gif.gmagon.com/docs
+$ python -m SimpleHTTPServer 5001
+
+```
+
+##### 
+
+---
+## RHC 上的操作
 #### 启动服务器 
 rhc app-start -a apiserver -n gmagon
 
