@@ -282,7 +282,7 @@ def __install_common_api_Ver_1_0_0(api):
         def post(self):
             return self.common_curd_post()
 
-    api.add_resource(APIGUser, pr + '/users')
+    api.add_resource(APIGUser, pr + '/users', endpoint='api_g_user')
 
     # GUserMachines
     """
@@ -303,7 +303,7 @@ def __install_common_api_Ver_1_0_0(api):
     3. delete
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:8051/api/v1.0.0/machines -d "{\"op\":\"delete\",\"where\":{\"id\":\"NOGUserMachines\"}}" -X POST -v
     """
-    api.add_resource(APIGUserMachines, pr + '/machines')
+    api.add_resource(APIGUserMachines, pr + '/machines', endpoint='api_g_machines')
 
 def __install_gif_api_Ver_1_0_0(api):
     """
@@ -767,7 +767,7 @@ def __install_gif_api_Ver_1_0_0(api):
     3. delete
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:8051/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"delete\",\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
     """
-    api.add_resource(APIUsers, pr + '/data_user')
+    api.add_resource(APIUsers, pr + '/data_user', endpoint='gif_users')
 
     # types
     """
