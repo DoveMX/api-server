@@ -43,3 +43,7 @@ rhc app-stop -a apiserver -n gmagon
 
 #### 查询服务器上的日志
 rhc tail -a apiserver -n gmagon
+
+
+----
+全新的数据库，看需要
