@@ -22,7 +22,8 @@ if app_for_rhc:
     from apiapp import app as application
     print(u'appVersion:' + application.version())
 else:
-    from apiapp import run_app_for_test
+    from apiapp import run_app_for_test, app as application
+    print(u'appVersion:' + application.version())
     run_app_for_test()
 
 """

@@ -150,25 +150,9 @@ def run_app_for_test():
     port = 5000
     server_enable_debug = True  # 是否开启服务器调试
 
-    try:
-        # Get the environment information we need to start the server
-        ip = 'localhost'
-        port = int(os.environ['OPENSHIFT_PYTHON_PORT'])
-        host_name = os.environ['OPENSHIFT_GEAR_DNS']
-
-        server_enable_debug = False
-    except Exception:
-        pass
-
     # 打印一些关键的数据
     print('\nip=%s, port=%d' % (ip, port))
     print('mysql_server_url = %s' % mysql_server_url)
-
-    # 自动创建数据库
-    create_database()
-
-    # 启动前需要运行
-    app.before_run()
 
     # 启动系统
     app.run(debug=server_enable_debug, host=ip, port=port)
