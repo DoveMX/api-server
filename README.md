@@ -13,11 +13,18 @@ pip install MySQL-python
 
 ## 启动
 
-`javacript`
+```cmd
+//1. 先启动Mysql
+
+$ systemctl stop mysqld
+$ systemctl start mysqld
+$ mysql -u root -p
+
+//2. 启动服务器
 $ cd /Users/ian/gmagon_projects/gmagon_all/api_gmagon_web/python/
 $ source ./venv/bin/activate
 $ python api/wsgi.py
-`end`
+````
 
 
 ---
