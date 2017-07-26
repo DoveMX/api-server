@@ -129,16 +129,20 @@ class Categories(db.Model):
         })
         return info
 
-    def getJSONEx(self):
+    def getJSONEx(self, more=True):
         info = self.getJSON()
         info.update({
-            'children': _Utils.calc_list(self.children),
-            'tags': _Utils.calc_list(self.tags),
-            'items': _Utils.calc_list(self.items),
-            'sets': _Utils.calc_list(self.sets),
             'items_statistics': _Utils.calc_user_op_statistics_count(self.items),
             'sets_statistics': _Utils.calc_user_op_statistics_count(self.sets),
         })
+
+        if more:
+            info.update({
+                'children': _Utils.calc_list(self.children),
+                'tags': _Utils.calc_list(self.tags),
+                'items': _Utils.calc_list(self.items),
+                'sets': _Utils.calc_list(self.sets)
+            })
         return info
 
 
@@ -180,14 +184,19 @@ class Tags(db.Model):
         })
         return info
 
-    def getJSONEx(self):
+    def getJSONEx(self, more=True):
         info = self.getJSON()
         info.update({
-            'items': _Utils.calc_list(self.items),
-            'sets': _Utils.calc_list(self.sets),
             'items_statistics': _Utils.calc_user_op_statistics_count(self.items),
             'sets_statistics': _Utils.calc_user_op_statistics_count(self.sets),
         })
+
+        if more:
+            info.update({
+                'items': _Utils.calc_list(self.items),
+                'sets': _Utils.calc_list(self.sets)
+            })
+
         return info
 
 

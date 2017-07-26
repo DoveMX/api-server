@@ -425,12 +425,12 @@ def __install_gif_api_Ver_1_0_0(api):
 
         categories = Categories.query.filter_by(type=type_item_category).all()
         for cateogryObj in categories:
-            ele_category = cateogryObj.getJSONEx() if useJsonEx else cateogryObj.getJSON()
+            ele_category = cateogryObj.getJSONEx(more=False) if useJsonEx else cateogryObj.getJSON()
 
             ele_category['tags'] = []
             tags = cateogryObj.tags
             for tagObj in tags:
-                ele_category['tags'].append(tagObj.getJSONEx() if useJsonEx else tagObj.getJSON())
+                ele_category['tags'].append(tagObj.getJSONEx(more=False) if useJsonEx else tagObj.getJSON())
 
             dataList.append(ele_category)
 
