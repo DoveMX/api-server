@@ -7,6 +7,7 @@ import types
 
 #: lib
 from flask_restful import Resource, reqparse
+from flask import jsonify as flask_jsonify, request as flask_request
 from sqlalchemy import util
 
 from gmagon.database import db
@@ -189,6 +190,8 @@ class BaseCURD:
                 paginate_args = self.paginate_parse.parse_args()
                 paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
                 paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
+
+                # print("page=%d, per_page=%d" % (paginate['page'], paginate['per_page']))
         finally:
             if usePaginate:
                 return self.common_curd_query(query, {'page': paginate['page'],
@@ -490,8 +493,7 @@ def __install_gif_api_Ver_1_0_0(api):
                 return self.common_curd_get({'id': user_id})
             else:
                 return self.common_curd_get_ex()
-
-
+            
     """
     Item相关的API资源声明
     """
@@ -507,6 +509,8 @@ def __install_gif_api_Ver_1_0_0(api):
                 return self.common_curd_get({'id': item_id})
             else:
                 return self.common_curd_get_ex()
+        def post(self, item_id=None):
+            self.get(item_id)
 
     class ResItemsByTagId(BaseCURD, Resource):
         """
@@ -516,7 +520,7 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Item)
 
-        def get(self, tag_id):
+        def _get_post(self, tag_id=None):
             if tag_id:
                 ele = Tags.query.filter_by(id=tag_id).first()
                 if ele:
@@ -526,6 +530,14 @@ def __install_gif_api_Ver_1_0_0(api):
             else:
                 return self.common_curd_get_ex()
 
+        def get(self, tag_id=None):
+            return self._get_post(tag_id)
+        
+        def post(self, tag_id=None):
+            # json_data = flask_request.get_json(force=True)
+            # print("json_data=%s" % (json_data['page']))
+            return self._get_post(tag_id)
+
     class ResItemsByCategoryId(BaseCURD, Resource):
         """
         获取所有的Item数据通过Category
@@ -534,7 +546,7 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Item)
 
-        def get(self, category_id):
+        def get(self, category_id=None):
             if category_id:
                 ele = Categories.query.filter_by(id=category_id).first()
                 if ele:
@@ -543,6 +555,9 @@ def __install_gif_api_Ver_1_0_0(api):
                     return _get_err_info('category_id is null')
             else:
                 return self.common_curd_get_ex()
+        
+        def post(self, category_id=None):
+            return self.get(category_id)
 
     """
     Set相关的API资源声明
