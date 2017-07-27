@@ -340,8 +340,11 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(DataTypes)
 
-        def get(self):
-            return self.common_curd_get_ex()
+        def get(self, type_id=None):
+            if type_id:
+                return self.common_curd_get_ex({'id': type_id})
+            else:
+                return self.common_curd_get_ex()
 
         def post(self):
             return self.common_curd_post()
@@ -352,8 +355,11 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Categories)
 
-        def get(self):
-            return self.common_curd_get_ex()
+        def get(self, category_id=None):
+            if category_id:
+                return self.common_curd_get_ex({'id': category_id})
+            else:
+                return self.common_curd_get_ex()
 
         def post(self):
             return self.common_curd_post()
@@ -364,8 +370,11 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Tags)
 
-        def get(self):
-            return self.common_curd_get_ex()
+        def get(self, tag_id=None):
+            if tag_id:
+                return self.common_curd_get_ex({'id': tag_id})
+            else:
+                return self.common_curd_get_ex()
 
         def post(self):
             return self.common_curd_post()
@@ -376,8 +385,11 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Item)
 
-        def get(self):
-            return self.common_curd_get_ex()
+        def get(self, item_id=None):
+            if item_id:
+                return self.common_curd_get_ex({'id': item_id})
+            else:
+                return self.common_curd_get_ex()
 
         def post(self):
             return self.common_curd_post()
@@ -388,8 +400,11 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Set)
 
-        def get(self):
-            return self.common_curd_get_ex()
+        def get(self, set_id=None):
+            if set_id:
+                return self.common_curd_get_ex({'id':set_id})
+            else:
+                return self.common_curd_get_ex()
 
         def post(self):
             return self.common_curd_post()
@@ -789,7 +804,7 @@ def __install_gif_api_Ver_1_0_0(api):
     3. delete
     >>> curl -i -H "Content-Type: application/json" http://127.0.0.1:8051/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"where\":{\"id\":9}}" -X POST -v
     """
-    api.add_resource(APIDataType, pr + '/data_type')
+    api.add_resource(APIDataType, pr + '/data_type', pr + '/data_type/<int:type_id>')
 
     # categories
     """
@@ -807,16 +822,16 @@ def __install_gif_api_Ver_1_0_0(api):
     **[POST]
     参照data_type
     """
-    api.add_resource(APICategories, pr + '/data_categories')
+    api.add_resource(APICategories, pr + '/data_categories', pr + '/data_categories/<int:category_id>')
 
     # tags
-    api.add_resource(APITags, pr + '/data_tags')
+    api.add_resource(APITags, pr + '/data_tags', pr + '/data_tags/<int:tag_id>')
 
     # item
-    api.add_resource(APIItem, pr + '/data_items')
+    api.add_resource(APIItem, pr + '/data_items', pr + '/data_items/<int:item_id>')
 
     # set
-    api.add_resource(APISet, pr + '/data_sets')
+    api.add_resource(APISet, pr + '/data_sets', pr + '/data_items/<int:set_id>')
 
     ############################################
     # 获得Item所有的分类信息，不包括分类下的标签信息
