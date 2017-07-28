@@ -39,7 +39,7 @@ class BaseCURD:
 
 
         self.get_curd_parse = reqparse.RequestParser()
-        self.get_curd_parse.add_argument('where', type=str, required=True, help='No data provided',
+        self.get_curd_parse.add_argument('where', type=str, help='No data provided',
                                          location='json')
 
         self.get_deep_parse = reqparse.RequestParser()
@@ -126,17 +126,24 @@ class BaseCURD:
 
     def common_curd_get_ex(self, in_where=None, usePaginate=True):
         """派生方法，自动处理where及分页"""
-        where = in_where if in_where else {}
+        args_where = {}
+        try:
+            args = self.get_curd_parse.parse_args()
+            args_where = args.where
+        finally:
+            pass
+
+        where = in_where if in_where else args_where
         paginate = {
             'page': 1,
             'per_page': 25
         }
         deep = False
-
+        
+        print("[#] call common_curd_get_ex...")
         try:
-            args = self.get_curd_parse.parse_args()
-            where = self.__where(args)
-            where = where if where else in_where
+            where = self.__where(where)
+            where = where if where else {}
 
             deep_args = self.get_deep_parse.parse_args()
             deep = deep_args.deep
@@ -146,7 +153,12 @@ class BaseCURD:
                 paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
                 paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
 
+                print("page=%d, per_page=%d" % (paginate['page'], paginate['per_page']))
+
+        except Exception as e:
+            print(e.message)
         finally:
+            print("page=%d, per_page=%d" % (paginate['page'], paginate['per_page']))
             if usePaginate:
                 return self.common_curd_get(where, {'page': paginate['page'],
                                                     'per_page': paginate['per_page'],
@@ -206,7 +218,7 @@ class BaseCURD:
         op = args.op
         data = args.data
 
-        where = self.__where(args)
+        where = self.__where(args.where)
 
         data_item_list = None
         if re.findall('create', op):
@@ -246,20 +258,20 @@ class BaseCURD:
             'count': len(data_list)
         }
 
-    def __where(self, args):
+    def __where(self, in_where):
         where = None
-        if args is None:
+        if in_where is None:
             return where
 
-        if isinstance(args.where, types.DictType):
-            where = args.where
-        elif args.where:
+        if isinstance(in_where, types.DictType):
+            where = in_where
+        elif in_where:
             try:
-                where = eval(args.where)
+                where = eval(in_where)
                 if not isinstance(where, types.DictType):
-                    where = args.where.split(',')
+                    where = in_where.split(',')
             except:
-                where = args.where.split(',')
+                where = in_where.split(',')
         return where
 
 def __install_common_api_Ver_1_0_0(api):
@@ -493,7 +505,7 @@ def __install_gif_api_Ver_1_0_0(api):
                 return self.common_curd_get({'id': user_id})
             else:
                 return self.common_curd_get_ex()
-            
+
     """
     Item相关的API资源声明
     """
@@ -506,11 +518,12 @@ def __install_gif_api_Ver_1_0_0(api):
 
         def get(self, item_id=None):
             if item_id:
-                return self.common_curd_get({'id': item_id})
+                return self.common_curd_get_ex({'id': item_id})
             else:
                 return self.common_curd_get_ex()
         def post(self, item_id=None):
-            self.get(item_id)
+            print("post...........")
+            return self.get(item_id)
 
     class ResItemsByTagId(BaseCURD, Resource):
         """
