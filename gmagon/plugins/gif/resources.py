@@ -898,7 +898,7 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(APIItem, pr + '/data_items', pr + '/data_items/<int:item_id>')
 
     # set
-    api.add_resource(APISet, pr + '/data_sets', pr + '/data_items/<int:set_id>')
+    api.add_resource(APISet, pr + '/data_sets', pr + '/data_sets/<int:set_id>')
 
     ############################################
     # 获得Item所有的分类信息，不包括分类下的标签信息
