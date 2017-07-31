@@ -12,7 +12,7 @@ from gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api
     api_get_data_with_filter_query, \
     api_getSpecDataTypeItem
 from gmagon.plugins.gif.model import \
-    DataTypes, Categories, Tags, Item, Set, User
+    DataTypes, Categories, Tags, Item, Set, User, SetToItems
 from gmagon.plugins.gif.util import constUriPrefix
 
 
@@ -437,6 +437,21 @@ def __install_gif_api_Ver_1_0_0(api):
             else:
                 return self.common_curd_post()
 
+    class APISetToItems(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(SetToItems)
+
+        def get(self, set_id=None):
+            if set_id:
+                return self.common_curd_get_ex({'set_id': set_id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, set_id=None):
+            if set_id:
+                return self.common_curd_post(condition_for_query={'set_id': set_id})
+            else:
+                return self.common_curd_post()
     """
     ############################################################
     """
@@ -898,6 +913,9 @@ def __install_gif_api_Ver_1_0_0(api):
 
     # set
     api.add_resource(APISet, pr + '/data_sets', pr + '/data_sets/<int:set_id>')
+
+    # set to items
+    api.add_resource(APISetToItems, pr + '/data_set2items', pr + '/data_set2items/<int:set_id>')
 
     ############################################
     # 获得Item所有的分类信息，不包括分类下的标签信息

@@ -313,6 +313,34 @@ class SetToItems(db.Model):
     is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
     is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
 
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'set_id': self.set_id,
+            'item_id': self.item_id,
+
+            'order': self.order,
+            'bewrite': self.bewrite,
+
+            'active': self.active,
+            'copyright_protection': self.copyright_protection,
+            'is_shield': self.is_shield,
+            'is_removed': self.is_removed,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+
+    def getJSONEx(self, more=True):
+        info = self.getJSON()
+        return info
 
 ##############
 """
@@ -505,7 +533,7 @@ tbl_set_categories = db.Table(constTablePrefix + 'set_categories',
                               )
 
 # Note 资源&素材包表
-# tbl_set_items = db.Table(constTablePrefix + 'set_items',
+# SetToItems.__table__ = db.Table(constTablePrefix + 'set_items',
 #                          db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
 #                                    primary_key=True),
 #                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
@@ -590,11 +618,6 @@ class Set(db.Model):
     categories = db.relationship('Categories', secondary=tbl_set_categories,
                                  primaryjoin=id == tbl_set_categories.c.set_id,
                                  backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
-    # items = db.relationship('Item', secondary=tbl_set_items,
-    #                         primaryjoin=(id == tbl_set_items.c.set_id),
-    #                         order_by=tbl_set_items.c.order.asc(),
-    #                         collection_class=ordering_list(tbl_set_items.c.order),
-    #                         backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
 
     items = db.relationship('Item', secondary=SetToItems.__table__,
                             primaryjoin=(id == SetToItems.__table__.c.set_id),
@@ -667,16 +690,16 @@ class Set(db.Model):
             return query
         else:
             return db.session.query(Item,
-                                    tbl_set_items.c.order,
-                                    tbl_set_items.c.bewrite,
-                                    tbl_set_items.c.active,
-                                    tbl_set_items.c.copyright_protection,
-                                    tbl_set_items.c.is_shield,
-                                    tbl_set_items.c.is_removed,
-                                    ).join(tbl_set_items,
-                                           (tbl_set_items.c.set_id == set_id)).filter(
-                tbl_set_items.c.item_id == Item.id) \
-                .order_by(tbl_set_items.c.order.asc()).filter()
+                                    SetToItems.__table__.c.order,
+                                    SetToItems.__table__.c.bewrite,
+                                    SetToItems.__table__.c.active,
+                                    SetToItems.__table__.c.copyright_protection,
+                                    SetToItems.__table__.c.is_shield,
+                                    SetToItems.__table__.c.is_removed,
+                                    ).join(SetToItems.__table__,
+                                           (SetToItems.__table__.c.set_id == set_id)).filter(
+                SetToItems.__table__.c.item_id == Item.id) \
+                .order_by(SetToItems.__table__.c.order.asc()).filter()
 
 
 ### 评论部分
