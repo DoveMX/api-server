@@ -3,17 +3,16 @@
 
 # system package
 from datetime import datetime
-import types
 
+import types
 # libs
 from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.orm.collections import column_mapped_collection
-from sqlalchemy.orm import aliased
 
+from gmagon.common.util import format_datetime
 # project
 from gmagon.database import db
-from gmagon.common.util import format_datetime
 from gmagon.plugins.gif.util import constTablePrefix
+
 
 class _Utils:
     @staticmethod
@@ -30,7 +29,7 @@ class _Utils:
         if query is None:
             return info
 
-        info['count'] =  query.count()
+        info['count'] = query.count()
         for item in query:
             info['download'] += item.download_users.count()
             info['preview'] += item.preview_users.count()
@@ -55,11 +54,12 @@ class _Utils:
         if isinstance(obj, db.Query):
             return obj.count()
         elif isinstance(obj, types.ListType):
-            return  len(obj)
+            return len(obj)
         elif obj is None:
             return 0
         else:
             print('no match the obj type = %s' % type(obj))
+
 
 class DataTypes(db.Model):
     """
@@ -91,6 +91,7 @@ class DataTypes(db.Model):
 
     def __repr__(self):
         return "DataTypes(%d, %s, %s)" % (self.id, self.name, self.description)
+
 
 class Categories(db.Model):
     """
@@ -161,8 +162,6 @@ class Tags(db.Model):
     type_id = db.Column(db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     category = db.relationship('Categories', backref='tags')
 
-
-
     def getBaseJSON(self):
         return {
             'id': self.id,
@@ -174,7 +173,6 @@ class Tags(db.Model):
             'type_id': self.type_id,
             'type_name': self.type.name,
         }
-
 
     def getJSON(self):
         info = self.getBaseJSON()
@@ -217,7 +215,8 @@ class User(db.Model):
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     # 关联的机器码
-    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), nullable=False, unique=True, doc='唯一ID')  # 存储真实的机器码
+    machine_id = db.Column(db.String(255), db.ForeignKey('machines.id'), nullable=False, unique=True,
+                           doc='唯一ID')  # 存储真实的机器码
     machine = db.relationship('GUserMachines', backref='gif_user')
 
     # 关注与被关注
@@ -300,7 +299,22 @@ class UserAnalysisAUTO(db.Model):
 
 
 ##############
+class SetToItems(db.Model):
+    __tablename__ = constTablePrefix + 'set_items'
 
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    set_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'set.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'item.id'), nullable=False)
+    order = db.Column(db.Integer, nullable=False, default=0, doc='排序')
+    bewrite = db.Column(db.String(4000), nullable=True, default='', doc='针对该Item在Set中的介绍，有别于Item自己的描述')
+
+    active = db.Column(db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用')
+    copyright_protection = db.Column(db.Boolean, nullable=False, default=False, doc='数据项是否处于版权保护')
+    is_shield = db.Column(db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽')
+    is_removed = db.Column(db.Boolean, nullable=False, default=False, doc='是否被标记移除')
+
+
+##############
 """
 Many-to-Many Relationships
 """
@@ -425,7 +439,6 @@ class Item(db.Model):
             'share_quantity': self.share_users.count()
         }
 
-
     def getJSON(self):
         info = self.getBaseJSON()
         info.update({
@@ -434,7 +447,6 @@ class Item(db.Model):
             'sets_count': _Utils.auto_calc_count(self.sets),
         })
         return info
-
 
     def getJSONEx(self):
         """
@@ -449,8 +461,6 @@ class Item(db.Model):
             'sets': _Utils.calc_list(self.sets),
         })
         return info
-
-
 
     @staticmethod
     def sort_items_by_tag_id(tag_id):
@@ -495,20 +505,21 @@ tbl_set_categories = db.Table(constTablePrefix + 'set_categories',
                               )
 
 # Note 资源&素材包表
-tbl_set_items = db.Table(constTablePrefix + 'set_items',
-                         db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
-                                   primary_key=True),
-                         db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
-                                   primary_key=True),
-                         db.Column('order', db.Integer, nullable=False, default=0, doc='排序'),
-                         db.Column('bewrite', db.String(4000), nullable=True, default='', doc='针对该Item在Set中的介绍，有别于Item自己的描述'),
-
-                         db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
-                         db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
-                                   doc='数据项是否处于版权保护'),
-                         db.Column('is_shield', db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽'),
-                         db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
-                         )
+# tbl_set_items = db.Table(constTablePrefix + 'set_items',
+#                          db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
+#                                    primary_key=True),
+#                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
+#                                    primary_key=True),
+#                          db.Column('order', db.Integer, nullable=False, default=0, doc='排序'),
+#                          db.Column('bewrite', db.String(4000), nullable=True, default='',
+#                                    doc='针对该Item在Set中的介绍，有别于Item自己的描述'),
+#
+#                          db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
+#                          db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
+#                                    doc='数据项是否处于版权保护'),
+#                          db.Column('is_shield', db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽'),
+#                          db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
+#                          )
 
 """下载
 """
@@ -579,10 +590,16 @@ class Set(db.Model):
     categories = db.relationship('Categories', secondary=tbl_set_categories,
                                  primaryjoin=id == tbl_set_categories.c.set_id,
                                  backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
-    items = db.relationship('Item', secondary=tbl_set_items,
-                            primaryjoin=(id == tbl_set_items.c.set_id),
-                            order_by=tbl_set_items.c.order.asc(),
-                            collection_class=ordering_list(tbl_set_items.c.order),
+    # items = db.relationship('Item', secondary=tbl_set_items,
+    #                         primaryjoin=(id == tbl_set_items.c.set_id),
+    #                         order_by=tbl_set_items.c.order.asc(),
+    #                         collection_class=ordering_list(tbl_set_items.c.order),
+    #                         backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
+
+    items = db.relationship('Item', secondary=SetToItems.__table__,
+                            primaryjoin=(id == SetToItems.__table__.c.set_id),
+                            order_by=SetToItems.__table__.c.order.asc(),
+                            collection_class=ordering_list(SetToItems.__table__.c.order),
                             backref=db.backref('sets', lazy='dynamic'), lazy='dynamic')
 
     # 跟踪信息
@@ -594,8 +611,6 @@ class Set(db.Model):
                                        backref=db.backref('collection_sets', lazy='dynamic'), lazy='dynamic')
     share_users = db.relationship('User', secondary=tbl_set_trace_shares,
                                   backref=db.backref('share_sets', lazy='dynamic'), lazy='dynamic')
-
-
 
     def getBaseJSON(self):
         return {
@@ -630,7 +645,6 @@ class Set(db.Model):
         })
         return info
 
-
     def getJSONEx(self):
         info = self.getJSON()
         info.update({
@@ -639,8 +653,6 @@ class Set(db.Model):
             'items': _Utils.calc_list(self.items),
         })
         return info
-
-
 
     @staticmethod
     def get_items_order_by_set_id(_set_id=None):
@@ -662,7 +674,8 @@ class Set(db.Model):
                                     tbl_set_items.c.is_shield,
                                     tbl_set_items.c.is_removed,
                                     ).join(tbl_set_items,
-                                   (tbl_set_items.c.set_id == set_id)).filter(tbl_set_items.c.item_id == Item.id) \
+                                           (tbl_set_items.c.set_id == set_id)).filter(
+                tbl_set_items.c.item_id == Item.id) \
                 .order_by(tbl_set_items.c.order.asc()).filter()
 
 

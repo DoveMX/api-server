@@ -12,7 +12,7 @@ from gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api
     api_get_data_with_filter_query, \
     api_getSpecDataTypeItem
 from gmagon.plugins.gif.model import \
-    DataTypes, Categories, Tags, Item, Set, User, tbl_set_items
+    DataTypes, Categories, Tags, Item, Set, User
 from gmagon.plugins.gif.util import constUriPrefix
 
 
@@ -697,6 +697,7 @@ def __install_gif_api_Ver_1_0_0(api):
             self.post_args.add_argument('filter', type=str, help='find in cls', location='json')
             self.post_args.add_argument('data', type=dict, help='扩展数据区', location='json')
 
+
         def __where(self, in_where):
             where = None
             if in_where is None:
@@ -722,8 +723,8 @@ def __install_gif_api_Ver_1_0_0(api):
                 ref_data_list = api_get_data_with_filter_query(cls=self.refCls, filter=where).all()
 
                 # 查找符合filter过滤条件的对象
-                filter = self.__where(args.filter)
-                data_list = api_get_data_with_filter_query(cls=self.cls, filter=filter).all()
+                _filter = self.__where(args.filter)
+                data_list = api_get_data_with_filter_query(cls=self.cls, filter=_filter).all()
 
                 # 开始处理
                 for ele in data_list:
@@ -982,7 +983,7 @@ def __install_gif_api_Ver_1_0_0(api):
     2.分页方式
     >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -d "{\"page\":1, \"per_page\":2}" -X GET -v
     """
-    api.add_resource(ResSets, pr + '/sets', '/sets/<int:set_id>', endpoint='sets')
+    api.add_resource(ResSets, pr + '/sets', pr + '/sets/<int:set_id>', endpoint='sets')
     api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
     api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')
     api.add_resource(ResSetItemsBySetId, pr + '/sets_items/<int:set_id>', endpoint='sets_items')
@@ -1010,14 +1011,6 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResSetCategoriesData, pr + '/sets_categories_data', endpoint='sets_categories_data')
 
     # 管理单个Set中的Item
-    """
-    ===POST
-    >>> curl -i -H "Content-Type: application/json" 
-        http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_data 
-        -d "{\"op\":\"create\",\"where\":{\"set_id\":1, \"item_id\": 11},\"data\":{\"set_id\":1, \"item_id\": 11, \"order\": 1, \"bewrite\":\"Test\"}}"
-        -X POST -v
-
-    """
     api.add_resource(ResSetItemsData, pr + '/sets_items_data', endpoint='sets_items_data')
 
     ########################################
