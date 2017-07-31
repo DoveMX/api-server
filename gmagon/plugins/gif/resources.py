@@ -221,7 +221,10 @@ class BaseCURD:
         where = self.__where(args.where)
 
         data_item_list = None
-        if re.findall('create', op):
+        if re.findall('query', op):
+            return self.common_curd_get_ex()
+
+        elif re.findall('create', op):
             data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=True)
             if len(data_item_list) > 0:
                 for sub_item in data_item_list:
@@ -589,6 +592,9 @@ def __install_gif_api_Ver_1_0_0(api):
                 return self.common_curd_get({'id': set_id})
             else:
                 return self.common_curd_get_ex()
+        
+        def post(self, set_id=None):
+            return self.get(set_id)
 
     class ResSetsByTagId(BaseCURD, Resource):
         """
@@ -598,7 +604,7 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(Set)
 
-        def get(self, tag_id):
+        def get(self, tag_id=None):
             if tag_id:
                 ele = Tags.query.filter_by(id=tag_id).first()
                 if ele:
@@ -608,11 +614,14 @@ def __install_gif_api_Ver_1_0_0(api):
             else:
                 return self.common_curd_get_ex()
 
+        def post(self, tag_id=None):
+            return self.get(tag_id)
+
     class ResSetsByCategoryId(BaseCURD, Resource):
         def __init__(self):
             super(self.__class__, self).__init__(Set)
 
-        def get(self, category_id):
+        def get(self, category_id=None):
             if category_id:
                 ele = Categories.query.filter_by(id=category_id).first()
                 if ele:
@@ -622,11 +631,14 @@ def __install_gif_api_Ver_1_0_0(api):
             else:
                 return self.common_curd_get_ex()
 
+        def post(self, category_id=None):
+            return self.get(category_id)
+
     class ResSetItemsBySetId(BaseCURD, Resource):
         def __init__(self):
             super(self.__class__, self).__init__(Set)
 
-        def get(self, set_id):
+        def get(self, set_id=None):
             if set_id:
                 ele = Set.query.filter_by(id=set_id).first()
                 if ele:
@@ -636,11 +648,14 @@ def __install_gif_api_Ver_1_0_0(api):
             else:
                 return _get_err_info('set_id is null')
 
+        def post(self, set_id=None):
+            return self.get(set_id)
+
     class ResSetItemsOrderBySetId(BaseCURD, Resource):
         def __init__(self):
             super(self.__class__, self).__init__(Set)
 
-        def get(self, set_id):
+        def get(self, set_id=None):
             if set_id:
                 ele = Set.query.filter_by(id=set_id).first()
                 if ele:
@@ -649,6 +664,9 @@ def __install_gif_api_Ver_1_0_0(api):
                     return _get_err_info('not found ele')
             else:
                 return _get_err_info('set_id is null')
+        
+        def post(self, set_id=None):
+            return self.get(set_id)
 
     """
     ############################################################
