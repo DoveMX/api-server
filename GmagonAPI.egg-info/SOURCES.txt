@@ -1,6 +1,0 @@
-setup.py
-GmagonAPI.egg-info/PKG-INFO
-GmagonAPI.egg-info/SOURCES.txt
-GmagonAPI.egg-info/dependency_links.txt
-GmagonAPI.egg-info/requires.txt
-GmagonAPI.egg-info/top_level.txt
