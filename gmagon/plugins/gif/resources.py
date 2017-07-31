@@ -6,6 +6,7 @@ import types
 #: lib
 from flask_restful import Resource, reqparse
 
+#: local
 from gmagon.common.model import GUser, GUserMachines
 from gmagon.database import db
 from gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api_get_common_data_list, \
@@ -272,6 +273,46 @@ class BaseCURD:
         return where
 
 
+def __install_subAdmin_api_Ver_1_0_0(api):
+    pr = '/admin'
+
+    class TableDrop(Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def get(self, table=None):
+            cls = db.metadata.tables[table]
+            if cls is not None:
+                db.metadata.drop_all(db.engine, tables=[
+                    cls
+                ])
+                return {'status': 'success'}
+            else:
+                return {'status': 'fail'}
+
+        def post(self, table=None):
+            return self.get(table)
+
+
+    class SequencesDrop(Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, sequences=None):
+            pass
+
+    class TableTruncate(Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__()
+
+        def post(self, table=None):
+            pass
+
+    api.add_resource(TableDrop, pr + '/db_table/drop/<table>')
+    api.add_resource(SequencesDrop, pr + '/db_sequences/drop/<sequences>')
+    api.add_resource(TableTruncate, pr + '/db_table/truncate/<table>')
+
+
 def __install_common_api_Ver_1_0_0(api):
     pr = '/api/v1.0.0'
 
@@ -452,6 +493,7 @@ def __install_gif_api_Ver_1_0_0(api):
                 return self.common_curd_post(condition_for_query={'set_id': set_id})
             else:
                 return self.common_curd_post()
+
     """
     ############################################################
     """
@@ -660,23 +702,6 @@ def __install_gif_api_Ver_1_0_0(api):
         def post(self, category_id=None):
             return self.get(category_id)
 
-    class ResSetItemsBySetId(BaseCURD, Resource):
-        def __init__(self):
-            super(self.__class__, self).__init__(Set)
-
-        def get(self, set_id=None):
-            if set_id:
-                ele = Set.query.filter_by(id=set_id).first()
-                if ele:
-                    return self.common_curd_query_ex(ele.items)
-                else:
-                    return _get_err_info('not found ele')
-            else:
-                return _get_err_info('set_id is null')
-
-        def post(self, set_id=None):
-            return self.get(set_id)
-
     class ResSetItemsOrderBySetId(BaseCURD, Resource):
         def __init__(self):
             super(self.__class__, self).__init__(Set)
@@ -711,7 +736,6 @@ def __install_gif_api_Ver_1_0_0(api):
                                         location='json')
             self.post_args.add_argument('filter', type=str, help='find in cls', location='json')
             self.post_args.add_argument('data', type=dict, help='扩展数据区', location='json')
-
 
         def __where(self, in_where):
             where = None
@@ -774,9 +798,9 @@ def __install_gif_api_Ver_1_0_0(api):
         """
         管理Set集合中的Item数据
         """
+
         def __init__(self):
             super(self.__class__, self).__init__(props='items', cls=Set, ref_cls=Item)
-
 
     """
     ############################################################
@@ -1004,7 +1028,6 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResSets, pr + '/sets', pr + '/sets/<int:set_id>', endpoint='sets')
     api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
     api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')
-    api.add_resource(ResSetItemsBySetId, pr + '/sets_items/<int:set_id>', endpoint='sets_items')
 
     # 获取单个Set的元素，并包含Item的次序
     """
@@ -1013,7 +1036,6 @@ def __install_gif_api_Ver_1_0_0(api):
     >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -d "{\"deep\":1}" -X GET -v
     """
     api.add_resource(ResSetItemsOrderBySetId, pr + '/sets_items_order/<int:set_id>', endpoint='sets_items_order')
-
 
     # 记录以下数据
     """只支持POST方式
@@ -1042,5 +1064,6 @@ def __install_gif_api_Ver_1_0_0(api):
 
 def install(api):
     """Install for RESTFull framework"""
+    __install_subAdmin_api_Ver_1_0_0(api)
     __install_common_api_Ver_1_0_0(api)
     __install_gif_api_Ver_1_0_0(api)

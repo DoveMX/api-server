@@ -94,6 +94,8 @@ app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 # Step2: 配置路由
 print(u"[X] defined some admin route..")
 
+rAdmin = '/admin_gmagon'
+
 
 @app.after_request
 def after_request(response):
@@ -108,7 +110,7 @@ def hello_world():
     return u'Hello Gmagon'
 
 
-@app.route('/admin_gmagon/db/drop')
+@app.route(rAdmin + '/db/drop')
 def drop_database():
     if su_database_exists(app.config['SQLALCHEMY_DATABASE_URI']):
         su_drop_database(app.config['SQLALCHEMY_DATABASE_URI'])
@@ -117,7 +119,7 @@ def drop_database():
         return u'database not exit'
 
 
-@app.route('/admin_gmagon/db/create')
+@app.route(rAdmin + '/db/create')
 def create_database():
     if not su_database_exists(app.config['SQLALCHEMY_DATABASE_URI']):
         su_create_database(app.config['SQLALCHEMY_DATABASE_URI'])
@@ -126,12 +128,13 @@ def create_database():
         return u'database is exist'
 
 
-@app.route('/admin_gmagon/db/isexist')
+@app.route(rAdmin + '/db/isexist')
 def database_is_exist():
     if not su_database_exists(app.config['SQLALCHEMY_DATABASE_URI']):
         return u'[not exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
     else:
         return u'[exist] =' + app.config['SQLALCHEMY_DATABASE_URI']
+
 
 
 # 3. 启动前的最后准备
