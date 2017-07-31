@@ -679,16 +679,6 @@ def __install_gif_api_Ver_1_0_0(api):
         def post(self, set_id=None):
             return self.get(set_id)
 
-    class ManagerSetItems(BaseCURD, Resource):
-        """
-        管理Set集合中的Item数据
-        """
-        def __init__(self):
-            super(self.__class__, self).__init__(tbl_set_items.c)
-
-        def post(self):
-            return self.common_curd_post()
-
     """
     ############################################################
     """
@@ -700,11 +690,12 @@ def __install_gif_api_Ver_1_0_0(api):
             self.refCls = ref_cls
             self.post_args = reqparse.RequestParser()
 
-            self.post_args.add_argument('op', type=str, required=True, help='No op provided',
+            self.post_args.add_argument('op', type=str, default='add', required=True, help='No op provided',
                                         location='json')
             self.post_args.add_argument('where', type=str, required=True, help='find in refCLS',
                                         location='json')
             self.post_args.add_argument('filter', type=str, help='find in cls', location='json')
+            self.post_args.add_argument('data', type=dict, help='扩展数据区', location='json')
 
         def __where(self, in_where):
             where = None
@@ -736,10 +727,9 @@ def __install_gif_api_Ver_1_0_0(api):
 
                 # 开始处理
                 for ele in data_list:
-                    for ref_ele in ref_data_list:
-                        query = ele.__getattribute__(self.props)
-                        if query:
-                            query.append(ref_ele)
+                    query = ele.__getattribute__(self.props)
+                    if query:
+                        query.extend(ref_data_list)
 
                 return {
                     'status': 'success'
@@ -763,6 +753,14 @@ def __install_gif_api_Ver_1_0_0(api):
     class ResSetCategoriesData(ResRelationData):
         def __init__(self):
             super(self.__class__, self).__init__(props='categories', cls=Set, ref_cls=Categories)
+
+    class ResSetItemsData(ResRelationData):
+        """
+        管理Set集合中的Item数据
+        """
+        def __init__(self):
+            super(self.__class__, self).__init__(props='items', cls=Set, ref_cls=Item)
+
 
     """
     ############################################################
@@ -998,17 +996,6 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResSetItemsOrderBySetId, pr + '/sets_items_order/<int:set_id>', endpoint='sets_items_order')
 
 
-    # 管理单个Set中的Item
-    """
-    ===POST
-    >>> curl -i -H "Content-Type: application/json" 
-        http://192.168.3.6:5000/plugin/gif/api/v1.0.0/mgr_data_sets_items 
-        -d "{\"op\":\"create\",\"where\":{\"set_id\":1, \"item_id\": 11},\"data\":{\"set_id\":1, \"item_id\": 11, \"order\": 1, \"bewrite\":\"Test\"}}"
-        -X POST -v
-    
-    """
-    api.add_resource(ManagerSetItems, pr + '/mgr_data_sets_items', endpoint='mgr_data_sets_items')
-
     # 记录以下数据
     """只支持POST方式
     >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_download -d "{\"machine_id\":\"NOGUserMachines\", \"item_id\":1}" -X POST -v
@@ -1022,6 +1009,16 @@ def __install_gif_api_Ver_1_0_0(api):
     api.add_resource(ResSetTagsData, pr + '/sets_tags_data', endpoint='sets_tags_data')
     api.add_resource(ResSetCategoriesData, pr + '/sets_categories_data', endpoint='sets_categories_data')
 
+    # 管理单个Set中的Item
+    """
+    ===POST
+    >>> curl -i -H "Content-Type: application/json" 
+        http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_data 
+        -d "{\"op\":\"create\",\"where\":{\"set_id\":1, \"item_id\": 11},\"data\":{\"set_id\":1, \"item_id\": 11, \"order\": 1, \"bewrite\":\"Test\"}}"
+        -X POST -v
+
+    """
+    api.add_resource(ResSetItemsData, pr + '/sets_items_data', endpoint='sets_items_data')
 
     ########################################
     # CommentsForItem
