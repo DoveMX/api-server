@@ -22,7 +22,7 @@ def __get_data_with_filter(cls, filter={}, update_dict={}, createNew=True):
         ele = cls.query.filter(*filter).first()
 
     item = None
-    if ele is None:
+    if ele is None or not filter:
         if createNew:
             item = cls(**update_dict)
             __checkSessionAdd(item)
@@ -38,7 +38,7 @@ def __get_data_with_filter_list(cls, filter={}, update_dict={}, createNew=True):
     else:
         ele_list = cls.query.filter(*filter).all()
 
-    if len(ele_list) == 0:
+    if len(ele_list) == 0 or not filter:
         if createNew:
             item = cls(**update_dict)
             __checkSessionAdd(item)
