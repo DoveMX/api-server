@@ -13,7 +13,8 @@ from gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api
     api_get_data_with_filter_query, \
     api_getSpecDataTypeItem
 from gmagon.plugins.gif.model import \
-    DataTypes, Categories, Tags, Item, Set, User, SetToItems, SysConfigs, SysPush, UserConfig, UserPush, UserTrace, UserAnalysisAUTO
+    DataTypes, Categories, Tags, Item, Set, User, SetToItems, SysConfigs, SysPush, UserConfig, UserPush, UserTrace, \
+    UserAnalysisAUTO
 from gmagon.plugins.gif.util import constUriPrefix
 
 
@@ -119,7 +120,7 @@ class BaseCURD:
             }
         }
 
-    def common_curd_get_ex(self, in_where=None, usePaginate=True):
+    def common_curd_get_ex(self, in_where=None, use_paginate=True):
         """派生方法，自动处理where及分页"""
         args_where = {}
         try:
@@ -143,7 +144,7 @@ class BaseCURD:
             deep_args = self.get_deep_parse.parse_args()
             deep = deep_args.deep
 
-            if usePaginate:
+            if use_paginate:
                 paginate_args = self.paginate_parse.parse_args()
                 paginate['page'] = paginate_args.page if paginate_args.page else paginate['page']
                 paginate['per_page'] = paginate_args.per_page if paginate_args.per_page else paginate['per_page']
@@ -154,7 +155,7 @@ class BaseCURD:
             print(e.message)
         finally:
             print("page=%d, per_page=%d" % (paginate['page'], paginate['per_page']))
-            if usePaginate:
+            if use_paginate:
                 return self.common_curd_get(where, {'page': paginate['page'],
                                                     'per_page': paginate['per_page'],
                                                     'error_out': False}, deep=deep)
@@ -266,10 +267,11 @@ class BaseCURD:
         elif in_where:
             try:
                 where = eval(in_where)
-                if not isinstance(where, types.DictType):
-                    where = in_where.split(',')
-            except:
-                where = in_where.split(',')
+                if not isinstance(where, types.ListType):
+                    where = [in_where]
+            except Exception as e:
+                print(e.message)
+                where = [in_where]
         return where
 
 
@@ -292,7 +294,6 @@ def __install_subAdmin_api_Ver_1_0_0(api):
 
         def post(self, table=None):
             return self.get(table)
-
 
     class SequencesDrop(Resource):
         def __init__(self):
@@ -492,7 +493,6 @@ def __install_gif_api_Ver_1_0_0(api):
                 return self.common_curd_post(condition_for_query={'id': id})
             else:
                 return self.common_curd_post()
-
 
     class APIUserTrace(BaseCURD, Resource):
         def __init__(self):
@@ -847,10 +847,11 @@ def __install_gif_api_Ver_1_0_0(api):
             elif in_where:
                 try:
                     where = eval(in_where)
-                    if not isinstance(where, types.DictType):
-                        where = in_where.split(',')
-                except:
-                    where = in_where.split(',')
+                    if not isinstance(where, types.ListType):
+                        where = [in_where]
+                except Exception as e:
+                    print(e.message)
+                    where = [in_where]
             return where
 
         def post(self):
@@ -971,214 +972,237 @@ def __install_gif_api_Ver_1_0_0(api):
         def __init__(self):
             super(self.__class__, self).__init__(props='share_users', cls=Set)
 
-    api.add_resource(TestUnicode, pr + '/testunicode')
-
-    # users
-    """
-    **[GET]
-    1. 无分页处理
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{}" -X GET -v
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X GET -v
-    
-    **[POST]
-    1. create
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"create\",\"where\":{\"machine_id\":\"NOGUserMachines\"},\"data\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
-    2. update
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"update\",\"where\":{\"machine_id\":\"NOGUserMachines\"},\"data\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
-    3. delete
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"delete\",\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
-    """
-    api.add_resource(APIUsers, pr + '/data_user', endpoint='gif_users')
-
-    # types
-    """
-    **[GET]
-    1. 无分页处理
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":{\"name\":\"test\"}}" -X GET -v
-    1.1 单个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1\"}" -X GET -v
-    1.2 多个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1, id > 4\"}" -X GET -v
-    2. 有分页处理
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"page\":1, \"per_page\":20, \"where\":{\"name\":\"test\"}}" -X GET -v
-
-    **[POST]
-    1. create
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"where\":{\"name\":\"test\"},\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
-    2. update
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"where\":\"id = 9\",\"data\":{\"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
-    3. delete
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"where\":{\"id\":9}}" -X POST -v
-    """
-    api.add_resource(APIDataType, pr + '/data_type', pr + '/data_type/<int:type_id>')
-
-    # categories
-    """
-    **[GET]
-    1. 无分页处理
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":{\"name\":\"animal\", \"type_id\":2}}" -X GET -v
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":{\"type_id\":2}}" -X GET -v
-    1.1 单个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":\"id > 5\"}" -X GET -v
-    1.2 多个过滤条件
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":\"id > 1, type_id = 2\"}" -X GET -v
-    2. 有分页处理
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"page\":1, \"per_page\":3, \"where\":{\"type_id\":2}}" -X GET -v
-
-    **[POST]
-    参照data_type
-    """
-    api.add_resource(APICategories, pr + '/data_categories', pr + '/data_categories/<int:category_id>')
-
-    # tags
-    api.add_resource(APITags, pr + '/data_tags', pr + '/data_tags/<int:tag_id>')
-
-    # sysConfig
-    api.add_resource(APISysConfigs, pr + '/data_sys_configs', pr + '/data_sys_configs/<int:id>')
-
-    # sysPush
-    api.add_resource(APISysPush, pr + '/data_sys_push', pr + '/data_sys_push/<int:id>')
-
-    # userConfig
-    api.add_resource(APIUserConfig, pr + '/data_user_config', pr + '/data_user_config/<int:id>')
-
-    # userPush
-    api.add_resource(APIUserPush, pr + '/data_user_push', pr + '/data_user_push/<int:id>')
-
-    # userTrace
-    api.add_resource(APIUserTrace, pr + '/data_user_trace', pr + '/data_user_trace/<int:id>')
-
-    # userAnalysis
-    api.add_resource(APIUserAnalysisAUTO, pr + '/data_user_analysis', pr + '/data_user_analysis/<int:id>')
-
-    # item
-    api.add_resource(APIItem, pr + '/data_items', pr + '/data_items/<int:item_id>')
-
-    # set
-    api.add_resource(APISet, pr + '/data_sets', pr + '/data_sets/<int:set_id>')
-
-    # set to items
-    api.add_resource(APISetToItems, pr + '/data_set2items', pr + '/data_set2items/<int:set_id>')
-
-    ############################################
-    # 获得Item所有的分类信息，不包括分类下的标签信息
-    """
-    ===GET
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_for_item -X GET -v    
-    """
-    api.add_resource(GetAllCategoriesForItem, pr + '/get_all_categories_for_item')
-
-    # 获得Set所有的分类信息，不包括分类下的标签信息
-    """
-    ===GET
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_for_set -X GET -v 
-    """
-    api.add_resource(GetAllCategoriesForSet, pr + '/get_all_categories_for_set')
-
-    # 获得Item所有的分类信息，包括分类下的标签信息
-    """
-    ===GET
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_tags_for_item -X GET -v 
-    """
-    api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/get_all_categories_tags_for_item')
-
-    # 获得Set所有的分类信息，包括分类下的标签信息
-    """
-    ===GET
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_tags_for_set -X GET -v
-    """
-    api.add_resource(GetAllCategoriesAndTagsForSet, pr + '/get_all_categories_tags_for_set')
-
-    # User
-
-    ########################################
-    # Items
-    """
-    ===Get
-    1.非分页方式
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items -X GET -v
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items/11 -X GET -v
-    2.分页方式
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items/11 -d "{\"page\":1, \"per_page\":2}" -X GET -v
-    """
-    api.add_resource(ResItems, pr + '/items', pr + '/items/<int:item_id>', endpoint='items')
-
-    # 通过Tag获取信息
-    """
-    ===Get (支持自动分页)
-    1. 
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items_by_tag_id/11 -X GET -v    
-    
-    """
-    api.add_resource(ResItemsByTagId, pr + '/items_by_tag_id/<int:tag_id>', endpoint='items_by_tag')
-
-    # 通过Category获取信息
-    """
-    ===Get (支持自动分页)
-    1. 
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items_by_category_id/4 -X GET -v    
-
-    """
-    api.add_resource(ResItemsByCategoryId, pr + '/items_by_category_id/<int:category_id>', endpoint='items_by_category')
-
-    # 记录以下数据
-    """只支持POST方式
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items_download -d "{\"machine_id\":\"NOGUserMachines\", \"id\":1}" -X POST -v
-    """
-    api.add_resource(ResItemDownloadUser, pr + '/items_download', endpoint='items_download')
-    api.add_resource(ResItemPreviewUser, pr + '/items_preview', endpoint='items_preview')
-    api.add_resource(ResItemCollectionUser, pr + '/items_collection', endpoint='items_collection')
-    api.add_resource(ResItemShareUser, pr + '/items_share', endpoint='items_share')
-
-    # 操作Item所属分类及标签的处理
-    api.add_resource(ResItemTagsData, pr + '/items_tags_data', endpoint='items_tags_data')
-    api.add_resource(ResItemCategoriesData, pr + '/items_categories_data', endpoint='items_categories_data')
-
-    ########################################
-    # Sets
-    """
-    ===Get
-    1.非分页方式
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets -X GET -v
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -X GET -v
-    2.分页方式
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -d "{\"page\":1, \"per_page\":2}" -X GET -v
-    """
-    api.add_resource(ResSets, pr + '/sets', pr + '/sets/<int:set_id>', endpoint='sets')
-    api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
-    api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>', endpoint='sets_by_category')
-
-    # 获取单个Set的元素，并包含Item的次序
-    """
-    ===GET
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -X GET -v
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -d "{\"deep\":1}" -X GET -v
-    """
-    api.add_resource(ResSetItemsOrderBySetId, pr + '/sets_items_order/<int:set_id>', endpoint='sets_items_order')
-
-    # 记录以下数据
-    """只支持POST方式
-    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_download -d "{\"machine_id\":\"NOGUserMachines\", \"id\":1}" -X POST -v
-    """
-    api.add_resource(ResSetDownloadUser, pr + '/sets_download', endpoint='sets_download')
-    api.add_resource(ResSetPreviewUser, pr + '/sets_preview', endpoint='sets_preview')
-    api.add_resource(ResSetCollectionUser, pr + '/sets_collection', endpoint='sets_collection')
-    api.add_resource(ResSetShareUser, pr + '/sets_share', endpoint='sets_share')
-
-    # 操作Item所属分类及标签的处理
-    api.add_resource(ResSetTagsData, pr + '/sets_tags_data', endpoint='sets_tags_data')
-    api.add_resource(ResSetCategoriesData, pr + '/sets_categories_data', endpoint='sets_categories_data')
-
-    # 管理单个Set中的Item
-    api.add_resource(ResSetItemsData, pr + '/sets_items_data', endpoint='sets_items_data')
-
-    ########################################
-    # CommentsForItem
-
-    # CommentsForSet
-
-
     #
+
+
+
+
+
+    # 将API安装
+    def __sub__install__api(api=None):
+        """
+        子函数处理过程
+        :param api:
+        :return:
+        """
+
+        api.add_resource(TestUnicode, pr + '/testunicode')
+
+        # users
+        """
+        **[GET]
+        1. 无分页处理
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{}" -X GET -v
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X GET -v
+        
+        **[POST]
+        1. create
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"create\",\"where\":{\"machine_id\":\"NOGUserMachines\"},\"data\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
+        2. update
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"update\",\"where\":{\"machine_id\":\"NOGUserMachines\"},\"data\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
+        3. delete
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"op\":\"delete\",\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X POST -v
+        """
+        api.add_resource(APIUsers, pr + '/data_user', endpoint='gif_users')
+
+        # types
+        """
+        **[GET]
+        1. 无分页处理
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":{\"name\":\"test\"}}" -X GET -v
+        1.1 单个过滤条件
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1\"}" -X GET -v
+        1.2 多个过滤条件
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"where\":\"id > 1, id > 4\"}" -X GET -v
+        2. 有分页处理
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"page\":1, \"per_page\":20, \"where\":{\"name\":\"test\"}}" -X GET -v
+    
+        **[POST]
+        1. create
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"create\",\"where\":{\"name\":\"test\"},\"data\":{\"name\":\"test\",\"description\":\"testdescription\"}}" -X POST -v
+        2. update
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"update\",\"where\":\"id = 9\",\"data\":{\"name\":\"test12\",\"description\":\"testdescription12\"}}" -X POST -v
+        3. delete
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_type -d "{\"op\":\"delete\",\"where\":{\"id\":9}}" -X POST -v
+        """
+        api.add_resource(APIDataType, pr + '/data_type', pr + '/data_type/<int:type_id>')
+
+        # categories
+        """
+        **[GET]
+        1. 无分页处理
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":{\"name\":\"animal\", \"type_id\":2}}" -X GET -v
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":{\"type_id\":2}}" -X GET -v
+        1.1 单个过滤条件
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":\"id > 5\"}" -X GET -v
+        1.2 多个过滤条件
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"where\":\"id > 1, type_id = 2\"}" -X GET -v
+        2. 有分页处理
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_categories -d "{\"page\":1, \"per_page\":3, \"where\":{\"type_id\":2}}" -X GET -v
+    
+        **[POST]
+        参照data_type
+        """
+        api.add_resource(APICategories, pr + '/data_categories', pr + '/data_categories/<int:category_id>')
+
+        # tags
+        api.add_resource(APITags, pr + '/data_tags', pr + '/data_tags/<int:tag_id>')
+
+        # sysConfig
+        api.add_resource(APISysConfigs, pr + '/data_sys_configs', pr + '/data_sys_configs/<int:id>')
+
+        # sysPush
+        api.add_resource(APISysPush, pr + '/data_sys_push', pr + '/data_sys_push/<int:id>')
+
+        # userConfig
+        api.add_resource(APIUserConfig, pr + '/data_user_config', pr + '/data_user_config/<int:id>')
+
+        # userPush
+        api.add_resource(APIUserPush, pr + '/data_user_push', pr + '/data_user_push/<int:id>')
+
+        # userTrace
+        api.add_resource(APIUserTrace, pr + '/data_user_trace', pr + '/data_user_trace/<int:id>')
+
+        # userAnalysis
+        api.add_resource(APIUserAnalysisAUTO, pr + '/data_user_analysis', pr + '/data_user_analysis/<int:id>')
+
+        # item
+        api.add_resource(APIItem, pr + '/data_items', pr + '/data_items/<int:item_id>')
+
+        # set
+        api.add_resource(APISet, pr + '/data_sets', pr + '/data_sets/<int:set_id>')
+
+        # set to items
+        api.add_resource(APISetToItems, pr + '/data_set2items', pr + '/data_set2items/<int:set_id>')
+
+        ############################################
+        # 获得Item所有的分类信息，不包括分类下的标签信息
+        """
+        ===GET
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_for_item -X GET -v    
+        """
+        api.add_resource(GetAllCategoriesForItem, pr + '/get_all_categories_for_item')
+
+        # 获得Set所有的分类信息，不包括分类下的标签信息
+        """
+        ===GET
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_for_set -X GET -v 
+        """
+        api.add_resource(GetAllCategoriesForSet, pr + '/get_all_categories_for_set')
+
+        # 获得Item所有的分类信息，包括分类下的标签信息
+        """
+        ===GET
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_tags_for_item -X GET -v 
+        """
+        api.add_resource(GetAllCategoriesAndTagsForItem, pr + '/get_all_categories_tags_for_item')
+
+        # 获得Set所有的分类信息，包括分类下的标签信息
+        """
+        ===GET
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/get_all_categories_tags_for_set -X GET -v
+        """
+        api.add_resource(GetAllCategoriesAndTagsForSet, pr + '/get_all_categories_tags_for_set')
+
+        # User
+
+        ########################################
+        # Items
+        """
+        ===Get
+        1.非分页方式
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items -X GET -v
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items/11 -X GET -v
+        2.分页方式
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items/11 -d "{\"page\":1, \"per_page\":2}" -X GET -v
+        """
+        api.add_resource(ResItems, pr + '/items', pr + '/items/<int:item_id>', endpoint='items')
+
+        # 通过Tag获取信息
+        """
+        ===Get (支持自动分页)
+        1. 
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items_by_tag_id/11 -X GET -v    
+        
+        """
+        api.add_resource(ResItemsByTagId, pr + '/items_by_tag_id/<int:tag_id>', endpoint='items_by_tag')
+
+        # 通过Category获取信息
+        """
+        ===Get (支持自动分页)
+        1. 
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items_by_category_id/4 -X GET -v    
+    
+        """
+        api.add_resource(ResItemsByCategoryId, pr + '/items_by_category_id/<int:category_id>',
+                         endpoint='items_by_category')
+
+        # 记录以下数据
+        """只支持POST方式
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/items_download -d "{\"machine_id\":\"NOGUserMachines\", \"id\":1}" -X POST -v
+        """
+        api.add_resource(ResItemDownloadUser, pr + '/items_download', endpoint='items_download')
+        api.add_resource(ResItemPreviewUser, pr + '/items_preview', endpoint='items_preview')
+        api.add_resource(ResItemCollectionUser, pr + '/items_collection', endpoint='items_collection')
+        api.add_resource(ResItemShareUser, pr + '/items_share', endpoint='items_share')
+
+        # 操作Item所属分类及标签的处理
+        api.add_resource(ResItemTagsData, pr + '/items_tags_data', endpoint='items_tags_data')
+        api.add_resource(ResItemCategoriesData, pr + '/items_categories_data', endpoint='items_categories_data')
+
+        ########################################
+        # Sets
+        """
+        ===Get
+        1.非分页方式
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets -X GET -v
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -X GET -v
+        2.分页方式
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -d "{\"page\":1, \"per_page\":2}" -X GET -v
+        """
+        api.add_resource(ResSets, pr + '/sets', pr + '/sets/<int:set_id>', endpoint='sets')
+        api.add_resource(ResSetsByTagId, pr + '/sets_by_tag_id/<int:tag_id>', endpoint='sets_by_tag')
+        api.add_resource(ResSetsByCategoryId, pr + '/sets_by_category_id/<int:category_id>',
+                         endpoint='sets_by_category')
+
+        # 获取单个Set的元素，并包含Item的次序
+        """
+        ===GET
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -X GET -v
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_items_order/1 -d "{\"deep\":1}" -X GET -v
+        """
+        api.add_resource(ResSetItemsOrderBySetId, pr + '/sets_items_order/<int:set_id>', endpoint='sets_items_order')
+
+        # 记录以下数据
+        """只支持POST方式
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets_download -d "{\"machine_id\":\"NOGUserMachines\", \"id\":1}" -X POST -v
+        """
+        api.add_resource(ResSetDownloadUser, pr + '/sets_download', endpoint='sets_download')
+        api.add_resource(ResSetPreviewUser, pr + '/sets_preview', endpoint='sets_preview')
+        api.add_resource(ResSetCollectionUser, pr + '/sets_collection', endpoint='sets_collection')
+        api.add_resource(ResSetShareUser, pr + '/sets_share', endpoint='sets_share')
+
+        # 操作Item所属分类及标签的处理
+        api.add_resource(ResSetTagsData, pr + '/sets_tags_data', endpoint='sets_tags_data')
+        api.add_resource(ResSetCategoriesData, pr + '/sets_categories_data', endpoint='sets_categories_data')
+
+        # 管理单个Set中的Item
+        api.add_resource(ResSetItemsData, pr + '/sets_items_data', endpoint='sets_items_data')
+
+        """
+        添加系统默认推送API
+        """
+
+
+        ########################################
+        # CommentsForItem
+
+        # CommentsForSet
+
+
+        #
+
+    __sub__install__api(api=api)
 
 
 def install(api):

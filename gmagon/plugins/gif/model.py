@@ -204,9 +204,9 @@ class SysConfigs(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='配置的类型')
-    name = db.Column(db.String(255), doc='配置的唯一名称')
+    name = db.Column(db.String(255), default='', doc='配置的唯一名称')
     content = db.Column(db.Text, nullable=False, default='', doc='配置的内容')
-    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    description = db.Column(db.String(4000), default='', nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     def getBaseJSON(self):
@@ -244,11 +244,11 @@ class SysPush(db.Model):
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
     name = db.Column(db.String(255), doc='唯一名称')
 
-    title = db.Column(db.String(255), doc='推送内容的标题')
-    subtitle = db.Column(db.String(512), doc='推送内容的子标题')
+    title = db.Column(db.String(255), default='', doc='推送内容的标题')
+    subtitle = db.Column(db.String(512), default='', doc='推送内容的子标题')
 
     content = db.Column(db.Text, nullable=False, default='', doc='推送的内容的JSON字符串')
-    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    description = db.Column(db.String(4000), default='', nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     def getBaseJSON(self):
@@ -342,9 +342,9 @@ class UserConfig(db.Model):
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='配置的类型')
-    name = db.Column(db.String(255), doc='配置的唯一名称')
+    name = db.Column(db.String(255), default='', doc='配置的唯一名称')
     content = db.Column(db.Text, nullable=False, default='', doc='配置的内容')
-    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    description = db.Column(db.String(4000), default='', nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     def getBaseJSON(self):
@@ -382,7 +382,7 @@ class UserTrace(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     content = db.Column(db.Text, nullable=False, default='')
-    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    description = db.Column(db.String(4000), default='', nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     def getBaseJSON(self):
@@ -421,8 +421,8 @@ class UserPush(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='向谁推送')
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
 
-    title = db.Column(db.String(255), doc='推送内容的标题')
-    subtitle = db.Column(db.String(512), doc='推送内容的子标题')
+    title = db.Column(db.String(255), default='', doc='推送内容的标题')
+    subtitle = db.Column(db.String(512), default='', doc='推送内容的子标题')
 
     content = db.Column(db.Text, nullable=False, default='', doc='推送的内容的JSON字符串')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
@@ -462,7 +462,7 @@ class UserAnalysisAUTO(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='分析谁')
     type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='分析的数据类型')
     content = db.Column(db.Text, nullable=False, default='', doc='分析的结果')
-    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    description = db.Column(db.String(4000), default='', nullable=False, doc='简介')
 
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
