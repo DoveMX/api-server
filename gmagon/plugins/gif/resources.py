@@ -13,7 +13,7 @@ from gmagon.plugins.gif.data import api_session_commit, api_checkSessionAdd, api
     api_get_data_with_filter_query, \
     api_getSpecDataTypeItem
 from gmagon.plugins.gif.model import \
-    DataTypes, Categories, Tags, Item, Set, User, SetToItems
+    DataTypes, Categories, Tags, Item, Set, User, SetToItems, SysConfigs, SysPush, UserConfig, UserPush, UserTrace, UserAnalysisAUTO
 from gmagon.plugins.gif.util import constUriPrefix
 
 
@@ -442,6 +442,103 @@ def __install_gif_api_Ver_1_0_0(api):
         def post(self, tag_id=None):
             if tag_id:
                 return self.common_curd_post(condition_for_query={'id': tag_id})
+            else:
+                return self.common_curd_post()
+
+    class APISysConfigs(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(SysConfigs)
+
+        def get(self, id=None):
+            if id:
+                return self.common_curd_get_ex({'id': id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, id=None):
+            if id:
+                return self.common_curd_post(condition_for_query={'id': id})
+            else:
+                return self.common_curd_post()
+
+    class APISysPush(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(SysPush)
+
+        def get(self, id=None):
+            if id:
+                return self.common_curd_get_ex({'id': id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, id=None):
+            if id:
+                return self.common_curd_post(condition_for_query={'id': id})
+            else:
+                return self.common_curd_post()
+
+    class APIUserConfig(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(UserConfig)
+
+        def get(self, id=None):
+            if id:
+                return self.common_curd_get_ex({'id': id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, id=None):
+            if id:
+                return self.common_curd_post(condition_for_query={'id': id})
+            else:
+                return self.common_curd_post()
+
+
+    class APIUserTrace(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(UserTrace)
+
+        def get(self, id=None):
+            if id:
+                return self.common_curd_get_ex({'id': id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, id=None):
+            if id:
+                return self.common_curd_post(condition_for_query={'id': id})
+            else:
+                return self.common_curd_post()
+
+    class APIUserPush(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(UserPush)
+
+        def get(self, id=None):
+            if id:
+                return self.common_curd_get_ex({'id': id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, id=None):
+            if id:
+                return self.common_curd_post(condition_for_query={'id': id})
+            else:
+                return self.common_curd_post()
+
+    class APIUserAnalysisAUTO(BaseCURD, Resource):
+        def __init__(self):
+            super(self.__class__, self).__init__(UserAnalysisAUTO)
+
+        def get(self, id=None):
+            if id:
+                return self.common_curd_get_ex({'id': id})
+            else:
+                return self.common_curd_get_ex()
+
+        def post(self, id=None):
+            if id:
+                return self.common_curd_post(condition_for_query={'id': id})
             else:
                 return self.common_curd_post()
 
@@ -880,6 +977,7 @@ def __install_gif_api_Ver_1_0_0(api):
     """
     **[GET]
     1. 无分页处理
+    >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{}" -X GET -v
     >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/data_user -d "{\"where\":{\"machine_id\":\"NOGUserMachines\"}}" -X GET -v
     
     **[POST]
@@ -934,6 +1032,24 @@ def __install_gif_api_Ver_1_0_0(api):
 
     # tags
     api.add_resource(APITags, pr + '/data_tags', pr + '/data_tags/<int:tag_id>')
+
+    # sysConfig
+    api.add_resource(APISysConfigs, pr + '/data_sys_configs', pr + '/data_sys_configs/<int:id>')
+
+    # sysPush
+    api.add_resource(APISysPush, pr + '/data_sys_push', pr + '/data_sys_push/<int:id>')
+
+    # userConfig
+    api.add_resource(APIUserConfig, pr + '/data_user_config', pr + '/data_user_config/<int:id>')
+
+    # userPush
+    api.add_resource(APIUserPush, pr + '/data_user_push', pr + '/data_user_push/<int:id>')
+
+    # userTrace
+    api.add_resource(APIUserTrace, pr + '/data_user_trace', pr + '/data_user_trace/<int:id>')
+
+    # userAnalysis
+    api.add_resource(APIUserAnalysisAUTO, pr + '/data_user_analysis', pr + '/data_user_analysis/<int:id>')
 
     # item
     api.add_resource(APIItem, pr + '/data_items', pr + '/data_items/<int:item_id>')

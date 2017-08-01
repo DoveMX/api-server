@@ -231,8 +231,26 @@ def init_all():
     type_set_category = __getSpecDataTypeItem(name='SetCategory', description='Set分类的类型')
     type_item_tag = __getSpecDataTypeItem(name='ItemTag', description='Item标签的类型')
     type_set_tag = __getSpecDataTypeItem(name='SetTag', description='Set标签的类型')
+
+    # sysConfig
+    type_sys_config = __getSpecDataTypeItem(name='SysConfigType', description='系统配置数据类型')
+
+    # sysPush
+    type_sys_push = __getSpecDataTypeItem(name='SysPushType', description='系统推送数据类型')
+
+    # userConfig
+    type_user_config = __getSpecDataTypeItem(name='ConfigType', description='用户配置数据类型')
+
+    # userPush
+    type_user_push = __getSpecDataTypeItem(name='PushType', description='用户数据推送类型')
+
+    # userTrace
+    type_user_trace = __getSpecDataTypeItem(name='TraceType', description='用户数据跟踪类型')
+
+    # userAnalysis
     type_user_analysis = __getSpecDataTypeItem(name='AnalysisType', description='分析数据类型')
 
+    # ------------------------------
     __initDataForItemAndSetCommon(type_item_category, type_item_tag)
     __initDataForItemAndSetCommon(type_set_category, type_set_tag)
 

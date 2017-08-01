@@ -22,5 +22,6 @@ def init(api):
 
     """
     http://127.0.0.1:5000/plugin/gif/api/data_init
+    http://192.168.3.6:5000/plugin/gif/api/data_init
     """
     api.add_resource(InitSubSystemGifData, constUriPrefix + '/data_init')

@@ -198,6 +198,84 @@ class Tags(db.Model):
         return info
 
 
+class SysConfigs(db.Model):
+    """系统配置"""
+    __tablename__ = constTablePrefix + 'sys_configs'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='配置的类型')
+    name = db.Column(db.String(255), doc='配置的唯一名称')
+    content = db.Column(db.Text, nullable=False, default='', doc='配置的内容')
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.type.name,
+            'name': self.name,
+            'content': self.content,
+            'description': self.description,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
+
+
+class SysPush(db.Model):
+    """
+    系统推送，一般存在于非用户个性化推送的情况，使用系统推送数据，同时，用户个性推送有别于系统推送内容的时候启用
+    例如：
+    种类1：推荐最上端的图片显示
+    种类2：个性推荐的集合
+
+    """
+    __tablename__ = constTablePrefix + 'sys_push'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
+    name = db.Column(db.String(255), doc='唯一名称')
+
+    title = db.Column(db.String(255), doc='推送内容的标题')
+    subtitle = db.Column(db.String(512), doc='推送内容的子标题')
+
+    content = db.Column(db.Text, nullable=False, default='', doc='推送的内容的JSON字符串')
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.type.name,
+            'name': self.name,
+
+            'title': self.title,
+            'subtitle': self.subtitle,
+
+            'content': self.content,
+            'description': self.description,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
+
+
 # 用户部分
 tbl_followers = db.Table(constTablePrefix + 'followers',
                          db.Column('follower_id', db.Integer, db.ForeignKey(constTablePrefix + 'user.id')),
@@ -257,6 +335,42 @@ class User(db.Model):
         return info
 
 
+class UserConfig(db.Model):
+    """系统配置"""
+    __tablename__ = constTablePrefix + 'user_configs'
+
+    id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
+    type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='配置的类型')
+    name = db.Column(db.String(255), doc='配置的唯一名称')
+    content = db.Column(db.Text, nullable=False, default='', doc='配置的内容')
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
+    create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.type.name,
+            'user_id': self.user_id,
+
+
+            'name': self.name,
+            'content': self.content,
+            'description': self.description,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
+
+
 class UserTrace(db.Model):
     """
     针对用户的操作跟踪，为后面分析用户行为及数据做准备
@@ -266,32 +380,76 @@ class UserTrace(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False)
-    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
+    type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False)
     content = db.Column(db.Text, nullable=False, default='')
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.type.name,
+            'user_id': self.user_id,
+
+            'content': self.content,
+            'description': self.description,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
 
 
 class UserPush(db.Model):
     """
     根据用户的习惯（从用户的行为中分析得来），推荐给用户一些自动化的信息
+    例如：
+    种类1：推荐最上端的图片显示
+    种类2：个性推荐的集合
+
     """
     __tablename__ = constTablePrefix + 'user_push'
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='向谁推送')
-    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
+    type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='推送的类型')
 
     title = db.Column(db.String(255), doc='推送内容的标题')
     subtitle = db.Column(db.String(512), doc='推送内容的子标题')
 
     content = db.Column(db.Text, nullable=False, default='', doc='推送的内容的JSON字符串')
-
-    download_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被下载的次数')
-    preview_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被浏览的次数')
-    collection_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被收藏的次数')
-    share_quantity = db.Column(db.Integer, default=0, nullable=False, doc='被分享的次数')
-
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.type.name,
+            'user_id': self.user_id,
+
+            'title': self.title,
+            'subtitle': self.subtitle,
+
+            'content': self.content,
+            'description': self.description,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
 
 
 class UserAnalysisAUTO(db.Model):
@@ -302,13 +460,34 @@ class UserAnalysisAUTO(db.Model):
 
     id = db.Column(db.Integer, db.Sequence(__tablename__ + '_id_seq'), autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'user.id'), nullable=False, doc='分析谁')
-    type = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='分析的数据类型')
+    type_id = db.Column(db.Integer, db.ForeignKey(constTablePrefix + 'types.id'), nullable=False, doc='分析的数据类型')
     content = db.Column(db.Text, nullable=False, default='', doc='分析的结果')
+    description = db.Column(db.String(4000), nullable=False, doc='简介')
 
     create_time = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def getBaseJSON(self):
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.type.name,
+            'user_id': self.user_id,
 
-##############
+            'content': self.content,
+            'description': self.description,
+
+            'create_time': format_datetime(self.create_time)
+        }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self):
+        info = self.getBaseJSON()
+        return info
+
+
 class SetToItems(db.Model):
     __tablename__ = constTablePrefix + 'set_items'
 
@@ -342,15 +521,14 @@ class SetToItems(db.Model):
             'create_time': format_datetime(self.create_time)
         }
 
-
     def getJSON(self):
         info = self.getBaseJSON()
         return info
 
-
     def getJSONEx(self, more=True):
         info = self.getJSON()
         return info
+
 
 ##############
 """
@@ -463,6 +641,10 @@ class Item(db.Model):
             'name': self.name,
             'thumb': self.thumb,
             'url': self.url,
+            'size': self.size,
+            'dimensions': self.dimensions,
+            'ext': self.ext,
+            'md5': self.md5,
             'description': self.description,
             'create_time': format_datetime(self.create_time),
 
@@ -541,23 +723,6 @@ tbl_set_categories = db.Table(constTablePrefix + 'set_categories',
                                         nullable=False,
                                         primary_key=True)
                               )
-
-# Note 资源&素材包表
-# SetToItems.__table__ = db.Table(constTablePrefix + 'set_items',
-#                          db.Column('set_id', db.ForeignKey(constTablePrefix + 'set.id'), nullable=False,
-#                                    primary_key=True),
-#                          db.Column('item_id', db.ForeignKey(constTablePrefix + 'item.id'), nullable=False,
-#                                    primary_key=True),
-#                          db.Column('order', db.Integer, nullable=False, default=0, doc='排序'),
-#                          db.Column('bewrite', db.String(4000), nullable=True, default='',
-#                                    doc='针对该Item在Set中的介绍，有别于Item自己的描述'),
-#
-#                          db.Column('active', db.Boolean, nullable=False, default=True, doc='数据项是否处于激活状态，激活即为可用'),
-#                          db.Column('copyright_protection', db.Boolean, nullable=False, default=False,
-#                                    doc='数据项是否处于版权保护'),
-#                          db.Column('is_shield', db.Boolean, nullable=False, default=False, doc='是否被系统设置屏蔽'),
-#                          db.Column('is_removed', db.Boolean, nullable=False, default=False, doc='是否被标记移除')
-#                          )
 
 """下载
 """
@@ -767,6 +932,12 @@ RelationShip
 ## DataTypes
 DataTypes.categories = db.relationship('Categories', backref='type', order_by=Categories.id)
 DataTypes.tags = db.relationship('Tags', backref='type', order_by=Tags.id)
+DataTypes.sys_configs = db.relationship('SysConfigs', backref='type', order_by=SysConfigs.id)
+DataTypes.sys_push = db.relationship('SysPush', backref='type', order_by=SysPush.id)
+DataTypes.user_configs = db.relationship('UserConfig', backref='type', order_by=UserConfig.id)
+DataTypes.user_trace = db.relationship('UserTrace', backref='type', order_by=UserTrace.id)
+DataTypes.user_push = db.relationship('UserPush', backref='type', order_by=UserPush.id)
+DataTypes.user_analysis = db.relationship('UserAnalysisAUTO', backref='type', order_by=UserAnalysisAUTO.id)
 
 ##See: https://stackoverflow.com/questions/6782133/sqlalchemy-one-to-many-relationship-on-single-table-inheritance-declarative
 Categories.children = db.relationship('Categories', backref='parent', remote_side=Categories.id)
