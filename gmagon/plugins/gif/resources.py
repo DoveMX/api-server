@@ -336,6 +336,9 @@ def __install_common_api_Ver_1_0_0(api):
         def post(self):
             return self.common_curd_post()
 
+    # Guser
+    """
+    """
     api.add_resource(APIGUser, pr + '/users', endpoint='api_g_user')
 
     # GUserMachines

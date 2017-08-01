@@ -240,11 +240,21 @@ class User(db.Model):
     def is_following(self, user):
         return self.followed.filter(tbl_followers.c.followed_id == user.id).count() > 0
 
-    def getJSON(self):
+    def getBaseJSON(self):
         return {
             'id': self.id,
             'machine_id': self.machine_id,
+
+            'create_time': format_datetime(self.create_time)
         }
+
+    def getJSON(self):
+        info = self.getBaseJSON()
+        return info
+
+    def getJSONEx(self, more=True):
+        info = self.getJSON()
+        return info
 
 
 class UserTrace(db.Model):
