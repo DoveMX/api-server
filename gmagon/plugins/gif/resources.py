@@ -1159,6 +1159,7 @@ def __install_gif_api_Ver_1_0_0(api):
         1.非分页方式
         >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets -X GET -v
         >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -X GET -v
+        >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets -d "{\"where\":\" id in (1,2,3,4,5,6) \"}" -X GET -v
         2.分页方式
         >>> curl -i -H "Content-Type: application/json" http://192.168.3.6:5000/plugin/gif/api/v1.0.0/sets/1 -d "{\"page\":1, \"per_page\":2}" -X GET -v
         """
