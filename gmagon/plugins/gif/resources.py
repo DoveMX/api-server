@@ -228,7 +228,7 @@ class BaseCURD:
             api_session_commit()
 
         elif re.findall('update', op):
-            data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=False)
+            data_item_list = api_get_common_data_list(cls=self.cls, filter=where, update_dict=data, createNew=True)
             if len(data_item_list) > 0:
                 for sub_item in data_item_list:
                     for (k, v) in data.items():
@@ -267,7 +267,8 @@ class BaseCURD:
         elif in_where:
             try:
                 where = eval(in_where)
-                if not isinstance(where, types.ListType):
+                if not isinstance(where, types.DictType) \
+                        and not isinstance(where, types.ListType):
                     where = [in_where]
             except Exception as e:
                 print(e.message)
@@ -847,7 +848,8 @@ def __install_gif_api_Ver_1_0_0(api):
             elif in_where:
                 try:
                     where = eval(in_where)
-                    if not isinstance(where, types.ListType):
+                    if not isinstance(where, types.DictType) \
+                            and not isinstance(where, types.ListType):
                         where = [in_where]
                 except Exception as e:
                     print(e.message)
